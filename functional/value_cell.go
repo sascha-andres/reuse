@@ -32,8 +32,6 @@ func CreateValueCell[T comparable](initial T) ValueCell[T] {
 	watchers := make([]func(oldValue, newValue T), 0)
 	var mu sync.Mutex
 	g := func() T {
-		mu.Lock()
-		defer mu.Unlock()
 		return value
 	}
 	u := func(newValue T) {
