@@ -8,7 +8,7 @@ type ValueCell[T comparable] struct {
 	// Get returns the current value
 	Get func() T
 	// Set updates the curent value
-	Set func(T)
+	Set func(T) bool
 	// AddWatcher allows adding a watcher to get notified on value change// AddWatcher allows adding a watcher to get notified on value change
 	AddWatcher func(func(T, T))
 }
@@ -16,6 +16,7 @@ type ValueCell[T comparable] struct {
 // CreateValueCell creates a ValueCell. A value cells simply wrap a variable with
 // two simple operations (Get and Set). Access is locked with a sync.Mutex.
 // To get notified about value changes use AddWatcher to provide watchers
+// Set returns a bool indicating whether a lock was possible or not
 //
 // Usage:
 //
@@ -34,8 +35,10 @@ func CreateValueCell[T comparable](initial T) ValueCell[T] {
 	g := func() T {
 		return value
 	}
-	u := func(newValue T) {
-		mu.Lock()
+	u := func(newValue T) bool {
+		if !mu.TryLock() {
+			return false
+		}
 		defer mu.Unlock()
 		oldValue := value
 		if oldValue != newValue {
@@ -44,6 +47,7 @@ func CreateValueCell[T comparable](initial T) ValueCell[T] {
 				watcher(oldValue, newValue)
 			}
 		}
+		return true
 	}
 	w := func(watcher func(oldValue, newValue T)) {
 		watchers = append(watchers, watcher)

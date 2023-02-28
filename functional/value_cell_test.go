@@ -35,3 +35,18 @@ func TestValueCellComplex(t *testing.T) {
 		t.Fatalf("expected 5 as result, got %d", vc3.Get())
 	}
 }
+
+func TestValueCellLockCondition(t *testing.T) {
+	t.Parallel()
+	vc1 := CreateValueCell(1)
+	vc1.AddWatcher(func(_ int, _ int) {
+		success := vc1.Set(3)
+		if success {
+			t.Fatalf("expected no success when setting value cell in watcher")
+		}
+	})
+	success := vc1.Set(2)
+	if !success {
+		t.Fatalf("expected success when setting value cell")
+	}
+}
