@@ -33,10 +33,10 @@ func generateGroupNameFromRowData[T comparable](row map[string]T, keys ...string
 	for _, key := range keys {
 		if val, ok := row[key]; ok {
 			if gn == "" {
-				gn = fmt.Sprintf("%s", val)
+				gn = fmt.Sprintf("%v", val)
 				continue
 			}
-			gn = fmt.Sprintf("%s_%s", gn, val)
+			gn = fmt.Sprintf("%s_%v", gn, val)
 		} else {
 			return "", ErrMissingColumn{col: key}
 		}
