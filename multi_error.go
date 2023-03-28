@@ -14,3 +14,8 @@ func (m MultiError) Error() string {
 	}
 	return result
 }
+
+// Add will add an error to the list
+func (m MultiError) Add(err error) MultiError {
+	return append(m, err)
+}
