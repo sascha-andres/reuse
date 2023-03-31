@@ -2,4 +2,4 @@ module github.com/sascha-andres/reuse
 
 go 1.20
 
-require golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2 // indirect
+require golang.org/x/exp v0.0.0-20230321023759-10a507213a29
