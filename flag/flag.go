@@ -250,7 +250,7 @@ func NFlag() int {
 // and provided for retrieval using GetVerbs
 func Parse() {
 	previousIsFlag := false
-	for _, v := range os.Args[0:] {
+	for _, v := range os.Args[1:] {
 		if !strings.HasPrefix(v, "-") {
 			if !previousIsFlag {
 				verbs = append(verbs, v)
