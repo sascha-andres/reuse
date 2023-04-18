@@ -4,11 +4,17 @@ import "github.com/sascha-andres/reuse/flag"
 import "fmt"
 
 func main() {
-  flag.Parse()
+	var boolFlag bool
+	var stringFlag string
 
-  verbs := flag.GetVerbs()
+	flag.BoolVar(&boolFlag, "bool", false, "a boolean flag")
+	flag.StringVar(&stringFlag, "string", "default", "a string flag")
 
-  for _, verb := range verbs {
-    fmt.Printf(" found verb %q\n", verb)
-  }
+	flag.Parse()
+
+	verbs := flag.GetVerbs()
+
+	for _, verb := range verbs {
+		fmt.Printf(" found verb %q\n", verb)
+	}
 }

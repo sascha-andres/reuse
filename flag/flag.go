@@ -7,11 +7,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/exp/slices"
 )
 
 var (
-	envPrefix string
-	verbs     []string
+	envPrefix    string
+	verbs        []string
+	booleanFlags []string
 )
 
 // Usage prints a usage message documenting all defined command-line flags
@@ -69,6 +72,7 @@ func Bool(name string, value bool, usage string) *bool {
 // BoolWithoutEnv defines a bool flag with specified name, default value, and usage string.
 // The return value is the address of a bool variable that stores the value of the flag.
 func BoolWithoutEnv(name string, value bool, usage string) *bool {
+	booleanFlags = append(booleanFlags, name)
 	return f.Bool(name, value, usage)
 }
 
@@ -81,6 +85,7 @@ func BoolVar(p *bool, name string, value bool, usage string) {
 // BoolVarWithoutEnv defines a bool flag with specified name, default value, and usage string.
 // The argument p points to a bool variable in which to store the value of the flag.
 func BoolVarWithoutEnv(p *bool, name string, value bool, usage string) {
+	booleanFlags = append(booleanFlags, name)
 	f.BoolVar(p, name, value, usage)
 }
 
@@ -257,7 +262,9 @@ func Parse() {
 			}
 			previousIsFlag = false
 		} else {
-			previousIsFlag = true
+			if !slices.Contains(booleanFlags, strings.TrimPrefix(v, "-")) {
+				previousIsFlag = true
+			}
 		}
 	}
 	if 1+len(verbs) > len(os.Args) {
