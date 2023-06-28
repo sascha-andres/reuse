@@ -15,6 +15,8 @@ var (
 	envPrefix    string
 	verbs        []string
 	booleanFlags []string
+	separate     bool
+	separated    []string
 )
 
 // Usage prints a usage message documenting all defined command-line flags
@@ -35,6 +37,11 @@ func Usage() {
 // requested element does not exist.
 func Arg(i int) string {
 	return f.Arg(i)
+}
+
+// SetSeparated activates the separation of commandline arguments
+func SetSeparated() {
+	separate = true
 }
 
 // SetEnvPrefix sets the prefix for environmental default values
@@ -250,29 +257,46 @@ func NFlag() int {
 	return f.NFlag()
 }
 
+// GetSeparated returns the command line arguments after the first --
+func GetSeparated() []string {
+	return separated
+}
+
 // Parse parses the command-line flags from os.Args. Must be called after all flags are defined and before flags are accessed by the program.
 // It differs from stdlib flag package insofar that verbs (flags not starting with -) before the first flag will be stripped
 // and provided for retrieval using GetVerbs
 func Parse() {
 	previousIsFlag := false
+	inSeparate := false
+	arguments := make([]string, 0, len(os.Args))
+	separated = make([]string, 0, len(os.Args))
+
 	for _, v := range os.Args[1:] {
-		if !strings.HasPrefix(v, "-") {
-			if !previousIsFlag {
-				verbs = append(verbs, v)
-			}
-			previousIsFlag = false
-		} else {
+		if inSeparate {
+			separated = append(separated, v)
+			continue
+		}
+		if separate && v == "--" {
+			inSeparate = true
+			continue
+		}
+		if strings.HasPrefix(v, "-") {
 			if !slices.Contains(booleanFlags, strings.TrimPrefix(v, "-")) {
 				previousIsFlag = true
 			}
+			arguments = append(arguments, v)
+		} else {
+			if !previousIsFlag {
+				verbs = append(verbs, v)
+			} else {
+				arguments = append(arguments, v)
+			}
+			previousIsFlag = false
 		}
-	}
-	if 1+len(verbs) > len(os.Args) {
-		return
 	}
 
 	// Ignore errors; CommandLine is set for ExitOnError.
-	_ = f.CommandLine.Parse(os.Args[1+len(verbs):])
+	_ = f.CommandLine.Parse(arguments)
 }
 
 // Parsed reports whether the command-line flags have been parsed.

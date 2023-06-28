@@ -14,13 +14,9 @@ func (m MultiError) Error() string {
 	for _, err := range m {
 		if result == "" {
 			result = err.Error()
+			continue
 		}
 		result = result + ";" + err.Error()
 	}
 	return result
-}
-
-// Add will add an error to the list
-func (m MultiError) Add(err error) MultiError {
-	return append(m, err)
 }
