@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 var mapTestCases = []struct {

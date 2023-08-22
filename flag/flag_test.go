@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 type verbTestCase struct {

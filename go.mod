@@ -1,5 +1,5 @@
 module github.com/sascha-andres/reuse
 
-go 1.20
+go 1.21
 
-require golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
+require golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63

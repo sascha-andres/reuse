@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 var groupByTestCases = []struct {
