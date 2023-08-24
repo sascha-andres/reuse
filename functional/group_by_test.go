@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+
 	"slices"
 
 	"golang.org/x/exp/maps"
@@ -182,6 +184,9 @@ func TestGroupByFunc(t *testing.T) {
 				if len(result[k]) != len(testCase.out[k]) {
 					t.Fatalf("expected %d items in group %q but got %d [result]", len(testCase.out[k]), k, len(result[k]))
 				}
+				if !cmp.Equal(result[k], testCase.out[k]) {
+					t.Fatalf("expected %v but got %v [result]", testCase.out[k], result[k])
+				}
 			}
 			for k := range testCase.out {
 				if _, ok := result[k]; !ok {
@@ -189,6 +194,9 @@ func TestGroupByFunc(t *testing.T) {
 				}
 				if len(result[k]) != len(testCase.out[k]) {
 					t.Fatalf("expected %d items in group %q but got %d [expectation]", len(result[k]), k, len(testCase.out[k]))
+				}
+				if !cmp.Equal(testCase.out[k], result[k]) {
+					t.Fatalf("expected %v but got %v [expectation]", result[k], testCase.out[k])
 				}
 			}
 		})
