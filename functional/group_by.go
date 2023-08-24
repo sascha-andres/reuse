@@ -43,3 +43,18 @@ func generateGroupNameFromRowData[T comparable](row map[string]T, keys ...string
 	}
 	return gn, nil
 }
+
+type KeyFunc[T any, K comparable] func(T) (K, error)
+
+// GroupByFunc returns a grouped result of an array of a map indexed by string
+func GroupByFunc[T any, K comparable](values []T, keyFunc KeyFunc[T, K]) (map[K][]T, error) {
+	result := make(map[K][]T)
+	for _, value := range values {
+		key, err := keyFunc(value)
+		if err != nil {
+			return nil, err
+		}
+		result[key] = append(result[key], value)
+	}
+	return result, nil
+}
