@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/sascha-andres/reuse/flag"
 )
-import "fmt"
 
 func main() {
 	var boolFlag bool
@@ -21,7 +22,7 @@ func main() {
 	for _, verb := range verbs {
 		fmt.Printf(" found verb %q\n", verb)
 	}
-	fmt.Printf("separated: %s\n", flag.Separated())
+	fmt.Printf("separated: %s\n", flag.GetSeparated())
 	fmt.Printf("bool: %t\n", boolFlag)
 	fmt.Printf("string: %s\n", stringFlag)
 }
