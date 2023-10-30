@@ -12,7 +12,7 @@ const tagName = "flag"
 // Container holds the variables
 type Container[T any] struct {
 	prefix string
-	t      *T
+	t      T
 
 	intVariables    map[string]*int64
 	stringVariables map[string]*string
@@ -24,7 +24,7 @@ type Container[T any] struct {
 // AddFlagsForStruct adds flags for the given struct.
 // The prefix is prepended to the flag name.
 // The struct must be a pointer to a struct.
-func AddFlagsForStruct[T any](prefix string, s *T) (*Container[T], error) {
+func AddFlagsForStruct[T any](prefix string, s T) (*Container[T], error) {
 	// TypeOf returns the reflection Type that represents the dynamic type of variable.
 	// If variable is a nil interface value, TypeOf returns nil.
 	t := reflect.TypeOf(s)
@@ -98,7 +98,7 @@ func isUInt(field reflect.StructField) bool {
 }
 
 // Parse reads the values from the flags and returns the struct
-func (c *Container[T]) Parse() *T {
+func (c *Container[T]) Parse() T {
 	t := reflect.TypeOf(c.t)
 
 	// Iterate over all available fields and read the tag value
