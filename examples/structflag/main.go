@@ -15,6 +15,8 @@ type Config struct {
 }
 
 func main() {
+	flag.SetEnvPrefix("STRUCTFLAG")
+
 	c, err := flag.AddFlagsForStruct("test", Config{Age: 18})
 	if err != nil {
 		panic(err)
