@@ -56,7 +56,7 @@ func AddFlagsForStruct[T any](prefix string, s T) (*Container[T], error) {
 			usage = d[1]
 		}
 		var name = fmt.Sprintf("%v-%v", prefix, tag)
-		if field.Type.Kind() == reflect.Int || field.Type.Kind() == reflect.Int64 || field.Type.Kind() == reflect.Int32 || field.Type.Kind() == reflect.Int16 || field.Type.Kind() == reflect.Int8 {
+		if isInt(field) {
 			c.intVariables[tag] = Int64(name, reflect.ValueOf(&c.t).Elem().Field(i).Int(), usage)
 		}
 		if field.Type.Kind() == reflect.String {
@@ -65,10 +65,10 @@ func AddFlagsForStruct[T any](prefix string, s T) (*Container[T], error) {
 		if field.Type.Kind() == reflect.Bool {
 			c.boolVariables[tag] = Bool(name, reflect.ValueOf(&c.t).Elem().Field(i).Bool(), usage)
 		}
-		if field.Type.Kind() == reflect.Float64 || field.Type.Kind() == reflect.Float32 {
+		if isFloat(field) {
 			c.floatVariables[tag] = Float64(name, reflect.ValueOf(&c.t).Elem().Field(i).Float(), usage)
 		}
-		if field.Type.Kind() == reflect.Uint || field.Type.Kind() == reflect.Uint64 || field.Type.Kind() == reflect.Uint32 || field.Type.Kind() == reflect.Uint16 || field.Type.Kind() == reflect.Uint8 {
+		if isUInt(field) {
 			c.uintVariables[tag] = Uint64(name, reflect.ValueOf(&c.t).Elem().Field(i).Uint(), usage)
 		}
 	}
@@ -76,6 +76,28 @@ func AddFlagsForStruct[T any](prefix string, s T) (*Container[T], error) {
 	return c, nil
 }
 
+func isInt(field reflect.StructField) bool {
+	return field.Type.Kind() == reflect.Int ||
+		field.Type.Kind() == reflect.Int64 ||
+		field.Type.Kind() == reflect.Int32 ||
+		field.Type.Kind() == reflect.Int16 ||
+		field.Type.Kind() == reflect.Int8
+}
+
+func isFloat(field reflect.StructField) bool {
+	return field.Type.Kind() == reflect.Float64 ||
+		field.Type.Kind() == reflect.Float32
+}
+
+func isUInt(field reflect.StructField) bool {
+	return field.Type.Kind() == reflect.Uint ||
+		field.Type.Kind() == reflect.Uint64 ||
+		field.Type.Kind() == reflect.Uint32 ||
+		field.Type.Kind() == reflect.Uint16 ||
+		field.Type.Kind() == reflect.Uint8
+}
+
+// Parse reads the values from the flags and returns the struct
 func (c *Container[T]) Parse() *T {
 	t := reflect.TypeOf(c.t)
 
@@ -96,7 +118,7 @@ func (c *Container[T]) Parse() *T {
 		}
 		for key, value := range c.intVariables {
 			if key == tag {
-				reflect.ValueOf(&c.t).Elem().Field(i).SetInt(int64(*value))
+				reflect.ValueOf(&c.t).Elem().Field(i).SetInt(*value)
 			}
 		}
 		for key, value := range c.boolVariables {
