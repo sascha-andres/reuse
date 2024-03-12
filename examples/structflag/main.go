@@ -19,11 +19,13 @@ type Config struct {
 func main() {
 	flag.SetEnvPrefix("STRUCTFLAG")
 
-	c, err := flag.AddFlagsForStruct("test", Config{Age: 18})
+	a := &Config{Age: 18}
+	c, err := flag.AddFlagsForStruct("test", a)
 	if err != nil {
 		panic(err)
 	}
-	_, err = flag.AddFlagsForStruct("test-2", Config{})
+	b := &Config{}
+	_, err = flag.AddFlagsForStruct("test-2", b)
 	if err != nil {
 		panic(err)
 	}
