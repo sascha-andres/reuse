@@ -56,26 +56,28 @@ func AddFlagsForStruct[T any](prefix string, s T) (*Container[T], error) {
 			usage = d[1]
 		}
 		var name = fmt.Sprintf("%v-%v", prefix, tag)
-		if isInt(field) {
-			c.intVariables[tag] = Int64(name, reflect.ValueOf(&c.t).Elem().Field(i).Int(), usage)
-		}
-		if field.Type.Kind() == reflect.String {
-			c.stringVariables[tag] = String(name, reflect.ValueOf(&c.t).Elem().Field(i).String(), usage)
-		}
-		if field.Type.Kind() == reflect.Bool {
-			c.boolVariables[tag] = Bool(name, reflect.ValueOf(&c.t).Elem().Field(i).Bool(), usage)
-		}
-		if isFloat(field) {
-			c.floatVariables[tag] = Float64(name, reflect.ValueOf(&c.t).Elem().Field(i).Float(), usage)
-		}
-		if isUInt(field) {
-			c.uintVariables[tag] = Uint64(name, reflect.ValueOf(&c.t).Elem().Field(i).Uint(), usage)
+		switch {
+		case isInt(field):
+			c.intVariables[tag] = Int64(name, 0, usage)
+		case field.Type.Kind() == reflect.String:
+			c.stringVariables[tag] = String(name, "", usage)
+		case field.Type.Kind() == reflect.Bool:
+			c.boolVariables[tag] = Bool(name, false, usage)
+		case isFloat(field):
+			c.floatVariables[tag] = Float64(name, 0.0, usage)
+		case isUInt(field):
+			c.uintVariables[tag] = Uint64(name, 0, usage)
+		case field.Type.Kind() == reflect.Struct:
+			fmt.Println("struct implementation")
+		default:
+			//fmt.Printf("%#v\n", field.Type.Kind().String())
 		}
 	}
 
 	return c, nil
 }
 
+// isInt checks if the given struct field is of type int or int64 or int32 or int16 or int8.
 func isInt(field reflect.StructField) bool {
 	return field.Type.Kind() == reflect.Int ||
 		field.Type.Kind() == reflect.Int64 ||
@@ -84,11 +86,13 @@ func isInt(field reflect.StructField) bool {
 		field.Type.Kind() == reflect.Int8
 }
 
+// isFloat checks if the given struct field is of type float64 or float32.
 func isFloat(field reflect.StructField) bool {
 	return field.Type.Kind() == reflect.Float64 ||
 		field.Type.Kind() == reflect.Float32
 }
 
+// isUInt checks if the given struct field is of type uint or uint64 or uint32 or uint16 or uint8.
 func isUInt(field reflect.StructField) bool {
 	return field.Type.Kind() == reflect.Uint ||
 		field.Type.Kind() == reflect.Uint64 ||
@@ -109,7 +113,8 @@ func (c *Container[T]) Parse() T {
 			continue
 		}
 		if strings.Contains(tag, ",") {
-			tag = strings.SplitN(tag, ",", 2)[0]
+			d := strings.SplitN(tag, ",", 2)
+			tag = d[0]
 		}
 		for key, value := range c.stringVariables {
 			if key == tag {

@@ -6,11 +6,14 @@ import (
 )
 
 type Config struct {
-	Name   string  `flag:"name,set the name"`
-	Age    int     `flag:"age,set the age"`
-	Human  bool    `flag:"human,set if human"`
-	Weight float64 `flag:"weight,set weight"`
-	Height uint    `flag:"height,set height"`
+	Name      string  `flag:"name,set the name"`
+	Age       int     `flag:"age,set the age"`
+	Human     bool    `flag:"human,set if human"`
+	Weight    float64 `flag:"weight,set weight"`
+	Height    uint    `flag:"height,set height"`
+	SubStruct struct {
+		Value uint `flag:"val"`
+	} `flag:"sub"`
 }
 
 func main() {
