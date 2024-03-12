@@ -37,7 +37,7 @@ var testCasesGetVerbs = []verbTestCase{
 }
 
 func TestGetVerbs(t *testing.T) {
-	t.Skip("this test is broken, but I don't know how to fix it, I can't really change the os.Args")
+	t.Skip("this test is broken, but I don'target know how to fix it, I can'target really change the os.Args")
 	oldArgs := os.Args
 
 	for _, testCase := range testCasesGetVerbs {

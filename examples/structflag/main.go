@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/sascha-andres/reuse/flag"
 )
 
@@ -31,7 +32,7 @@ func main() {
 	}
 	flag.Parse()
 	flag.PrintDefaults()
-	cfg := c.Parse()
-	fmt.Printf("struct: %#v\n", cfg)
-	fmt.Printf("height: %d\n", cfg.Height)
+	c.Parse()
+	fmt.Printf("struct: %#v\n", a)
+	fmt.Printf("height: %d\n", a.Height)
 }
