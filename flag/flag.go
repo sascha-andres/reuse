@@ -424,7 +424,7 @@ func Uint64VarWithoutEnv(p *uint64, name string, value uint64, usage string) {
 // UintVar defines a uint flag with specified name, default value, and usage string.
 // The argument p points to a uint variable in which to store the value of the flag.
 func UintVar(p *uint, name string, value uint, usage string) {
-	UintWithoutEnv(name, uint(uint64FromEnv(name, uint64(value))), usage)
+	UintVarWithoutEnv(p, name, uint(uint64FromEnv(name, uint64(value))), usage)
 }
 
 // UintVarWithoutEnv defines a uint flag with specified name, default value, and usage string.
