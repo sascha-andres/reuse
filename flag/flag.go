@@ -430,7 +430,7 @@ func UintVar(p *uint, name string, value uint, usage string) {
 // UintVarWithoutEnv defines a uint flag with specified name, default value, and usage string.
 // The argument p points to a uint variable in which to store the value of the flag.
 func UintVarWithoutEnv(p *uint, name string, value uint, usage string) {
-	f.Uint(name, value, usage)
+	f.UintVar(p, name, value, usage)
 }
 
 // UnquoteUsage extracts a back-quoted name from the usage string for a flag and returns it and the un-quoted usage.
