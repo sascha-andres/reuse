@@ -40,7 +40,10 @@ func Filter[T any](in []T, f func(T) (bool, error)) ([]T, error) {
 	var out []T
 	var errs []error
 	for _, t := range in {
-		if r, err := f(t); err == nil && r {
+		if r, err := f(t); err == nil {
+			if !r {
+				continue
+			}
 			out = append(out, t)
 		} else {
 			errs = append(errs, err)
