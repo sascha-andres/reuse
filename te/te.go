@@ -9,8 +9,7 @@ import (
 func MustGet[T any](t *testing.T, msg string, f func() (T, error)) T {
 	r, err := f()
 	if err != nil {
-		t.Error(fmt.Sprintf("%s: ", msg), err)
-		t.FailNow()
+		t.Fatalf("%s: %v", msg, err)
 	}
 	return r
 }
@@ -30,8 +29,7 @@ func ShouldGet[T any](t *testing.T, msg string, f func() (T, error)) T {
 func MustRun(t *testing.T, msg string, f func() error) {
 	err := f()
 	if err != nil {
-		t.Error(fmt.Sprintf("%s: ", msg), err)
-		t.FailNow()
+		t.Fatalf("%s: %v", msg, err)
 	}
 }
 
