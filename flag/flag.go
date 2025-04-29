@@ -4,19 +4,19 @@ import (
 	f "flag"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
-
-	"slices"
 )
 
 var (
-	envPrefix    string
-	verbs        []string
-	booleanFlags []string
-	separate     bool
-	separated    []string
+	envPrefix            string
+	overiddenEnvPrefixes map[string]string
+	verbs                []string
+	booleanFlags         []string
+	separate             bool
+	separated            []string
 )
 
 // Usage prints a usage message documenting all defined command-line flags
@@ -51,10 +51,24 @@ func SetEnvPrefix(prefix string) {
 	envPrefix = prefix
 }
 
+// SetEnvPrefixForFlag sets a custom environment variable prefix for the provided flag name.
+func SetEnvPrefixForFlag(flagName string, prefix string) {
+	if len(overiddenEnvPrefixes) == 0 {
+		overiddenEnvPrefixes = make(map[string]string)
+	}
+	overiddenEnvPrefixes[strings.ToUpper(flagName)] = prefix
+}
+
 // envNameForFlagName creates an environment variable from a flag name
 func envNameForFlagName(name string) string {
 	envName := name
-	if len(envPrefix) > 0 {
+	localEnvPrefix := envPrefix
+	if len(overiddenEnvPrefixes) > 0 {
+		if val, ok := overiddenEnvPrefixes[strings.ToUpper(name)]; ok {
+			localEnvPrefix = val
+		}
+	}
+	if len(localEnvPrefix) > 0 {
 		envName = fmt.Sprintf("%s_%s", envPrefix, name)
 	}
 	return strings.ToUpper(strings.Replace(envName, "-", "_", -1))
