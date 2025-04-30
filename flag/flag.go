@@ -69,7 +69,7 @@ func envNameForFlagName(name string) string {
 		}
 	}
 	if len(localEnvPrefix) > 0 {
-		envName = fmt.Sprintf("%s_%s", envPrefix, name)
+		envName = fmt.Sprintf("%s_%s", localEnvPrefix, name)
 	}
 	return strings.ToUpper(strings.Replace(envName, "-", "_", -1))
 }
