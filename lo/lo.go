@@ -20,3 +20,11 @@ func MustRun(logger *slog.Logger, msg string, f func() error) {
 		logger.Error(msg, "err", err)
 	}
 }
+
+// Must - panic if err is not nil
+func Must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
