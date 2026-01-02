@@ -295,6 +295,9 @@ func Parse() {
 			continue
 		}
 		if strings.HasPrefix(v, "-") {
+			if len(verbs) > 0 {
+				break
+			}
 			if !slices.Contains(booleanFlags, strings.TrimPrefix(v, "-")) {
 				previousIsFlag = true
 			}
