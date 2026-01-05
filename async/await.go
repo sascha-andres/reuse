@@ -1,9 +1,9 @@
 package async
 
 import (
+	"context"
 	"fmt"
 	"runtime/debug"
-	"context"
 )
 
 var ErrCancelled = fmt.Errorf("cancelled")
@@ -36,6 +36,7 @@ func Async[T any](ctx context.Context, f func(context.Context) (T, error)) *Futu
 					err = fmt.Errorf("panic: %v\n%s", x, debug.Stack())
 				}
 			}
+			close(done)
 		}()
 
 		result, err = f(ctx)
