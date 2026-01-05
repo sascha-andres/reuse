@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// TestAsyncAwaitBasic verifies the behavior of Async and Await by testing a simple asynchronous operation.
 func TestAsyncAwaitBasic(t *testing.T) {
 	ctx := context.Background()
 
@@ -25,6 +26,7 @@ func TestAsyncAwaitBasic(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitString verifies the behavior of Async and Await by testing a simple asynchronous operation that returns a string.
 func TestAsyncAwaitString(t *testing.T) {
 	ctx := context.Background()
 
@@ -41,6 +43,7 @@ func TestAsyncAwaitString(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitStruct verifies the behavior of Async and Await by testing a simple asynchronous operation that returns a struct.
 func TestAsyncAwaitStruct(t *testing.T) {
 	type Person struct {
 		Name string
@@ -62,6 +65,7 @@ func TestAsyncAwaitStruct(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitError verifies the behavior of Async and Await by testing an asynchronous operation that returns an error.
 func TestAsyncAwaitError(t *testing.T) {
 	ctx := context.Background()
 	expectedErr := errors.New("test error")
@@ -79,6 +83,7 @@ func TestAsyncAwaitError(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitPanicWithError verifies the behavior of Async and Await when the function panics with an error.
 func TestAsyncAwaitPanicWithError(t *testing.T) {
 	ctx := context.Background()
 	panicErr := errors.New("panic error")
@@ -102,6 +107,7 @@ func TestAsyncAwaitPanicWithError(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitPanicWithString verifies the behavior of Async and Await when the function panics with a string.
 func TestAsyncAwaitPanicWithString(t *testing.T) {
 	ctx := context.Background()
 
@@ -124,6 +130,7 @@ func TestAsyncAwaitPanicWithString(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitMultipleAwaits verifies the behavior of Async and Await when multiple awaits are performed on the same future.
 func TestAsyncAwaitMultipleAwaits(t *testing.T) {
 	ctx := context.Background()
 	callCount := 0
@@ -155,6 +162,7 @@ func TestAsyncAwaitMultipleAwaits(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitWithDelay verifies the behavior of Async and Await when the function takes a long time to execute.
 func TestAsyncAwaitWithDelay(t *testing.T) {
 	ctx := context.Background()
 
@@ -178,6 +186,7 @@ func TestAsyncAwaitWithDelay(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitConcurrent verifies the behavior of Async and Await when multiple asynchronous operations are executed concurrently.
 func TestAsyncAwaitConcurrent(t *testing.T) {
 	ctx := context.Background()
 
@@ -217,6 +226,7 @@ func TestAsyncAwaitConcurrent(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitPointer verifies the behavior of Async and Await when the function returns a pointer.
 func TestAsyncAwaitPointer(t *testing.T) {
 	type Data struct {
 		Value int
@@ -240,6 +250,7 @@ func TestAsyncAwaitPointer(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitSlice verifies the behavior of the Async and Await functions in handling slices with async execution.
 func TestAsyncAwaitSlice(t *testing.T) {
 	ctx := context.Background()
 
@@ -261,6 +272,7 @@ func TestAsyncAwaitSlice(t *testing.T) {
 	}
 }
 
+// TestAsyncAwaitMap verifies the behavior of the Async and Await functions in handling maps with async execution.
 func TestAsyncAwaitMap(t *testing.T) {
 	ctx := context.Background()
 
@@ -280,6 +292,7 @@ func TestAsyncAwaitMap(t *testing.T) {
 	}
 }
 
+// TestAsyncWithContextValues verifies the behavior of Async and Await when the context contains values.
 func TestAsyncWithContextValues(t *testing.T) {
 	type contextKey string
 	key := contextKey("testKey")
@@ -303,6 +316,7 @@ func TestAsyncWithContextValues(t *testing.T) {
 	}
 }
 
+// TestErrCancelled verifies the behavior of the ErrCancelled error.
 func TestErrCancelled(t *testing.T) {
 	if ErrCancelled == nil {
 		t.Fatalf("ErrCancelled should not be nil")
