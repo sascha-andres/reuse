@@ -32,6 +32,11 @@ func Usage() {
 	f.Usage()
 }
 
+// Args returns the non-flag command-line arguments.
+func Args() []string {
+	return f.Args()
+}
+
 // Arg returns the i'th command-line argument. Arg(0) is the first remaining argument
 // after flags have been processed. Arg returns an empty string if the
 // requested element does not exist.
