@@ -11,12 +11,13 @@ import (
 )
 
 var (
-	envPrefix            string
-	overiddenEnvPrefixes map[string]string
-	verbs                []string
-	booleanFlags         []string
-	separate             bool
-	separated            []string
+	envPrefix             string
+	overriddenEnvPrefixes map[string]string
+	verbs                 []string
+	booleanFlags          []string
+	separate              bool
+	separated             []string
+	arraySeparator        string = ","
 )
 
 // Usage prints a usage message documenting all defined command-line flags
@@ -58,18 +59,18 @@ func SetEnvPrefix(prefix string) {
 
 // SetEnvPrefixForFlag sets a custom environment variable prefix for the provided flag name.
 func SetEnvPrefixForFlag(flagName string, prefix string) {
-	if len(overiddenEnvPrefixes) == 0 {
-		overiddenEnvPrefixes = make(map[string]string)
+	if len(overriddenEnvPrefixes) == 0 {
+		overriddenEnvPrefixes = make(map[string]string)
 	}
-	overiddenEnvPrefixes[strings.ToUpper(flagName)] = prefix
+	overriddenEnvPrefixes[strings.ToUpper(flagName)] = prefix
 }
 
 // envNameForFlagName creates an environment variable from a flag name
 func envNameForFlagName(name string) string {
 	envName := name
 	localEnvPrefix := envPrefix
-	if len(overiddenEnvPrefixes) > 0 {
-		if val, ok := overiddenEnvPrefixes[strings.ToUpper(name)]; ok {
+	if len(overriddenEnvPrefixes) > 0 {
+		if val, ok := overriddenEnvPrefixes[strings.ToUpper(name)]; ok {
 			localEnvPrefix = val
 		}
 	}
@@ -113,6 +114,42 @@ func BoolVar(p *bool, name string, value bool, usage string) {
 func BoolVarWithoutEnv(p *bool, name string, value bool, usage string) {
 	booleanFlags = append(booleanFlags, name)
 	f.BoolVar(p, name, value, usage)
+}
+
+func stringSliceFromEnv(name string, value []string) []string {
+	val, found := os.LookupEnv(envNameForFlagName(name))
+	if !found {
+		return value
+	}
+	return strings.Split(val, arraySeparator)
+}
+
+// StringSlice defines a string slice flag with a specified name, default value, and usage string, including environment support.
+func StringSlice(name string, value []string, usage string) func() []string {
+	return StringSliceWithoutEnv(name, stringSliceFromEnv(name, value), usage)
+}
+
+// StringSliceWithoutEnv defines a string slice flag with a specified name, default value, and usage string.
+func StringSliceWithoutEnv(name string, value []string, usage string) func() []string {
+	v := f.String(name, strings.Join(value, arraySeparator), usage)
+	return func() []string {
+		return strings.Split(*v, arraySeparator)
+	}
+}
+
+// StringSliceVar defines a string slice flag with a name, default value, and usage, supporting environment variable overrides.
+func StringSliceVar(name string, value []string, usage string) func() []string {
+	return StringSliceVarWithoutEnv(name, stringSliceFromEnv(name, value), usage)
+}
+
+// StringSliceVarWithoutEnv defines a string slice flag with a specified name, default value, and usage string.
+// The argument p points to a string slice variable in which to store the value of the flag.
+func StringSliceVarWithoutEnv(name string, value []string, usage string) func() []string {
+	var v string
+	f.StringVar(&v, name, strings.Join(value, arraySeparator), usage)
+	return func() []string {
+		return strings.Split(v, arraySeparator)
+	}
 }
 
 // durationFromEnv returns parsed duration from environment variable. On error returning default value
