@@ -229,6 +229,67 @@ func joinSlice[T SliceElement](value []T) string {
 	return strings.Join(parts, arraySeparator)
 }
 
+// sliceValue implements flag.Value for a generic slice, enabling pointer-return slice flags.
+type sliceValue[T SliceElement] struct {
+	p *[]T
+}
+
+func (sv *sliceValue[T]) String() string {
+	return joinSlice(*sv.p)
+}
+
+func (sv *sliceValue[T]) Set(val string) error {
+	parts := strings.Split(val, arraySeparator)
+	result := make([]T, 0, len(parts))
+	for _, p := range parts {
+		v, err := parseSliceElement[T](p)
+		if err != nil {
+			return err
+		}
+		result = append(result, v)
+	}
+	*sv.p = result
+	return nil
+}
+
+// SliceWithoutEnv defines a slice flag for any SliceElement type without environment
+// variable support. Returns a pointer to the slice that is updated when the flag is parsed.
+func SliceWithoutEnv[T SliceElement](name string, value []T, usage string) *[]T {
+	p := &value
+	f.Var(&sliceValue[T]{p: p}, name, usage)
+	return p
+}
+
+// Slice defines a slice flag for any SliceElement type, reading the default from the
+// corresponding environment variable when present. Returns a pointer to the slice.
+func Slice[T SliceElement](name string, value []T, usage string) *[]T {
+	return SliceWithoutEnv(name, genericSliceFromEnv(name, value), usage)
+}
+
+// IntSliceWithoutEnv defines an int slice flag without environment variable support.
+// Returns a pointer to the slice that is updated when the flag is parsed.
+func IntSliceWithoutEnv(name string, value []int, usage string) *[]int {
+	return SliceWithoutEnv(name, value, usage)
+}
+
+// IntSlice defines an int slice flag, reading the default from the corresponding
+// environment variable when present. Returns a pointer to the slice.
+func IntSlice(name string, value []int, usage string) *[]int {
+	return Slice(name, value, usage)
+}
+
+// Float64SliceWithoutEnv defines a float64 slice flag without environment variable support.
+// Returns a pointer to the slice that is updated when the flag is parsed.
+func Float64SliceWithoutEnv(name string, value []float64, usage string) *[]float64 {
+	return SliceWithoutEnv(name, value, usage)
+}
+
+// Float64Slice defines a float64 slice flag, reading the default from the corresponding
+// environment variable when present. Returns a pointer to the slice.
+func Float64Slice(name string, value []float64, usage string) *[]float64 {
+	return Slice(name, value, usage)
+}
+
 // SliceVarWithoutEnv defines a slice flag for any SliceElement type. It does not
 // consult environment variables. The returned function retrieves the parsed slice.
 func SliceVarWithoutEnv[T SliceElement](name string, value []T, usage string) func() []T {
