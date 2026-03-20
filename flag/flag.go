@@ -152,6 +152,130 @@ func StringSliceVarWithoutEnv(name string, value []string, usage string) func() 
 	}
 }
 
+// SliceElement is a type constraint for types supported as slice elements in SliceVar.
+type SliceElement interface {
+	~string | ~int | ~int64 | ~int32 | ~float64 | ~float32
+}
+
+// parseSliceElement converts a string to T. Returns an error for unsupported types.
+func parseSliceElement[T SliceElement](s string) (T, error) {
+	var zero T
+	switch any(zero).(type) {
+	case string:
+		return any(s).(T), nil
+	case int:
+		v, err := strconv.Atoi(s)
+		return any(v).(T), err
+	case int64:
+		v, err := strconv.ParseInt(s, 0, 64)
+		return any(v).(T), err
+	case int32:
+		v, err := strconv.ParseInt(s, 0, 32)
+		return any(int32(v)).(T), err
+	case float64:
+		v, err := strconv.ParseFloat(s, 64)
+		return any(v).(T), err
+	case float32:
+		v, err := strconv.ParseFloat(s, 32)
+		return any(float32(v)).(T), err
+	}
+	return zero, fmt.Errorf("unsupported slice element type")
+}
+
+// sliceElementToString formats a T value as a string for use as a flag value.
+func sliceElementToString[T SliceElement](v T) string {
+	switch a := any(v).(type) {
+	case string:
+		return a
+	case int:
+		return strconv.Itoa(a)
+	case int64:
+		return strconv.FormatInt(a, 10)
+	case int32:
+		return strconv.FormatInt(int64(a), 10)
+	case float64:
+		return strconv.FormatFloat(a, 'f', -1, 64)
+	case float32:
+		return strconv.FormatFloat(float64(a), 'f', -1, 32)
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+// genericSliceFromEnv reads a comma-separated env var and parses it into []T.
+// Returns value unchanged if the env var is absent or any element fails to parse.
+func genericSliceFromEnv[T SliceElement](name string, value []T) []T {
+	val, found := os.LookupEnv(envNameForFlagName(name))
+	if !found {
+		return value
+	}
+	parts := strings.Split(val, arraySeparator)
+	result := make([]T, 0, len(parts))
+	for _, p := range parts {
+		v, err := parseSliceElement[T](p)
+		if err != nil {
+			return value
+		}
+		result = append(result, v)
+	}
+	return result
+}
+
+// joinSlice converts []T to a comma-separated string using arraySeparator.
+func joinSlice[T SliceElement](value []T) string {
+	parts := make([]string, len(value))
+	for i, v := range value {
+		parts[i] = sliceElementToString(v)
+	}
+	return strings.Join(parts, arraySeparator)
+}
+
+// SliceVarWithoutEnv defines a slice flag for any SliceElement type. It does not
+// consult environment variables. The returned function retrieves the parsed slice.
+func SliceVarWithoutEnv[T SliceElement](name string, value []T, usage string) func() []T {
+	var v string
+	f.StringVar(&v, name, joinSlice(value), usage)
+	return func() []T {
+		parts := strings.Split(v, arraySeparator)
+		result := make([]T, 0, len(parts))
+		for _, p := range parts {
+			elem, err := parseSliceElement[T](p)
+			if err != nil {
+				return value
+			}
+			result = append(result, elem)
+		}
+		return result
+	}
+}
+
+// SliceVar defines a slice flag for any SliceElement type, reading the default
+// from the corresponding environment variable when present.
+func SliceVar[T SliceElement](name string, value []T, usage string) func() []T {
+	return SliceVarWithoutEnv(name, genericSliceFromEnv(name, value), usage)
+}
+
+// IntSliceVarWithoutEnv defines an int slice flag without environment variable support.
+func IntSliceVarWithoutEnv(name string, value []int, usage string) func() []int {
+	return SliceVarWithoutEnv(name, value, usage)
+}
+
+// IntSliceVar defines an int slice flag, reading the default from the corresponding
+// environment variable when present.
+func IntSliceVar(name string, value []int, usage string) func() []int {
+	return SliceVar(name, value, usage)
+}
+
+// Float64SliceVarWithoutEnv defines a float64 slice flag without environment variable support.
+func Float64SliceVarWithoutEnv(name string, value []float64, usage string) func() []float64 {
+	return SliceVarWithoutEnv(name, value, usage)
+}
+
+// Float64SliceVar defines a float64 slice flag, reading the default from the corresponding
+// environment variable when present.
+func Float64SliceVar(name string, value []float64, usage string) func() []float64 {
+	return SliceVar(name, value, usage)
+}
+
 // durationFromEnv returns parsed duration from environment variable. On error returning default value
 func durationFromEnv(name string, value time.Duration) time.Duration {
 	val, found := os.LookupEnv(envNameForFlagName(name))
