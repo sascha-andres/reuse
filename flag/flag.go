@@ -355,11 +355,11 @@ func Parse() {
 	}
 
 	// re-add the first argument
-	args := []string{os.Args[0]}
-	args = append(args, arguments...)
+	//args := []string{os.Args[0]}
+	//args = append(args, arguments...)
 
 	// Ignore errors; CommandLine is set for ExitOnError.
-	_ = f.CommandLine.Parse(args)
+	_ = f.CommandLine.Parse(arguments)
 }
 
 // Parsed reports whether the command-line flags have been parsed.
