@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"testing"
+	"time"
 
 	"slices"
 )
@@ -75,6 +76,38 @@ func TestPConstructors_ExplicitValueAndVisit(t *testing.T) {
 		if !set[name] {
 			t.Errorf("Visit did not report %q as set", name)
 		}
+	}
+}
+
+func TestDurationP_DefaultToZeroValue(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	d := DurationP("p-duration", "")
+
+	os.Args = []string{"cmd"}
+	Parse()
+
+	if *d != 0 {
+		t.Fatalf("expected zero value, got %v", *d)
+	}
+}
+
+func TestDurationP_ExplicitValueAndVisit(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	d := DurationP("p-duration", "")
+
+	os.Args = []string{"cmd", "-p-duration", "5s"}
+	Parse()
+
+	if *d != 5*time.Second {
+		t.Fatalf("got %v, want 5s", *d)
+	}
+
+	set := map[string]bool{}
+	Visit(func(fl *flag.Flag) { set[fl.Name] = true })
+	if !set["p-duration"] {
+		t.Error("Visit did not report p-duration as set")
 	}
 }
 
