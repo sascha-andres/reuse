@@ -4,6 +4,7 @@ import (
 	f "flag"
 	"os"
 	"testing"
+	"time"
 )
 
 // resetForStructFlagTest gives each test a clean stdlib FlagSet and resets
@@ -387,6 +388,148 @@ func TestAddFlagsForStruct_PointerScalarLeaf_NestedInPointerBranch(t *testing.T)
 	}
 	if got.PointerBranch.Retries == nil || *got.PointerBranch.Retries != 5 {
 		t.Errorf("PointerBranch.Retries = %+v, want *5", got.PointerBranch.Retries)
+	}
+}
+
+type durationConfig struct {
+	Timeout  time.Duration  `flag:"timeout"`
+	Deadline *time.Duration `flag:"deadline"`
+}
+
+func TestAddFlagsForStruct_DurationValueLeaf_ParsesDurationString(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	cfg := &durationConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd", "-app-timeout", "5s"}
+	Parse()
+
+	got := c.Parse()
+	if got.Timeout != 5*time.Second {
+		t.Errorf("Timeout = %v, want 5s", got.Timeout)
+	}
+}
+
+func TestAddFlagsForStruct_DurationPointerLeaf_PresentViaFlag(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	cfg := &durationConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd", "-app-deadline", "1h30m"}
+	Parse()
+
+	got := c.Parse()
+	if got.Deadline == nil {
+		t.Fatal("Deadline = nil, want non-nil")
+	}
+	if *got.Deadline != 90*time.Minute {
+		t.Errorf("*Deadline = %v, want 1h30m", *got.Deadline)
+	}
+}
+
+func TestAddFlagsForStruct_DurationPointerLeaf_PresentViaEnv(t *testing.T) {
+	resetForStructFlagTest(t)
+	setEnv(t, "APP_DEADLINE", "10s")
+
+	cfg := &durationConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd"}
+	Parse()
+
+	got := c.Parse()
+	if got.Deadline == nil {
+		t.Fatal("Deadline = nil, want non-nil")
+	}
+	if *got.Deadline != 10*time.Second {
+		t.Errorf("*Deadline = %v, want 10s", *got.Deadline)
+	}
+}
+
+func TestAddFlagsForStruct_DurationPointerLeaf_AbsentStaysNil(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	cfg := &durationConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd", "-app-timeout", "1s"}
+	Parse()
+
+	got := c.Parse()
+	if got.Deadline != nil {
+		t.Errorf("Deadline = %v, want nil", *got.Deadline)
+	}
+}
+
+// A duration leaf nested inside a value-typed branch and a pointer-typed
+// branch, mirroring the pointer-scalar nesting tests.
+type durationInValueBranch struct {
+	Interval *time.Duration `flag:"interval"`
+}
+type durationInPointerBranch struct {
+	Interval *time.Duration `flag:"interval"`
+}
+type nestedDurationConfig struct {
+	ValueBranch   durationInValueBranch    `flag:"value"`
+	PointerBranch *durationInPointerBranch `flag:"ptr"`
+}
+
+func TestAddFlagsForStruct_DurationLeaf_NestedInValueBranch(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	cfg := &nestedDurationConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd", "-app-value-interval", "3s"}
+	Parse()
+
+	got := c.Parse()
+	if got.ValueBranch.Interval == nil || *got.ValueBranch.Interval != 3*time.Second {
+		t.Errorf("ValueBranch.Interval = %+v, want *3s", got.ValueBranch.Interval)
+	}
+	if got.PointerBranch != nil {
+		t.Errorf("PointerBranch = %+v, want nil (its own leaf never provided)", *got.PointerBranch)
+	}
+}
+
+func TestAddFlagsForStruct_DurationLeaf_NestedInPointerBranch(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	cfg := &nestedDurationConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd", "-app-ptr-interval", "7s"}
+	Parse()
+
+	got := c.Parse()
+	if got.ValueBranch.Interval != nil {
+		t.Errorf("ValueBranch.Interval = %v, want nil", *got.ValueBranch.Interval)
+	}
+	if got.PointerBranch == nil {
+		t.Fatal("PointerBranch = nil, want non-nil")
+	}
+	if got.PointerBranch.Interval == nil || *got.PointerBranch.Interval != 7*time.Second {
+		t.Errorf("PointerBranch.Interval = %+v, want *7s", got.PointerBranch.Interval)
 	}
 }
 
