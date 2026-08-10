@@ -195,6 +195,15 @@ func DurationVar(p *time.Duration, name string, value time.Duration, usage strin
 	DurationVarWithoutEnv(p, name, durationFromEnv(name, value), usage)
 }
 
+// DurationP defines a time.Duration flag with specified name and usage string. There is
+// no default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of a time.Duration variable that stores the value of
+// the flag. The flag accepts a value acceptable to time.ParseDuration.
+func DurationP(name, usage string) *time.Duration {
+	return Duration(name, 0, usage)
+}
+
 // DurationVarWithoutEnv defines a time.Duration flag with specified name, default value, and usage string.
 // The argument p points to a time.Duration variable in which to store the value of the flag.
 // The flag accepts a value acceptable to time.ParseDuration.
