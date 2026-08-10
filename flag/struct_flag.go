@@ -110,7 +110,21 @@ func buildNodes[T any](prefix string, t reflect.Type, c *Container[T]) []*struct
 		}
 
 		if isPtr {
-			// pointers to non-struct leaf fields are not supported
+			switch {
+			case isIntKind(ft.Kind()):
+				c.intVariables[name] = Int64P(name, usage)
+			case ft.Kind() == reflect.String:
+				c.stringVariables[name] = StringP(name, usage)
+			case ft.Kind() == reflect.Bool:
+				c.boolVariables[name] = BoolP(name, usage)
+			case isFloatKind(ft.Kind()):
+				c.floatVariables[name] = Float64P(name, usage)
+			case isUintKind(ft.Kind()):
+				c.uintVariables[name] = Uint64P(name, usage)
+			default:
+				continue
+			}
+			nodes = append(nodes, &structNode{index: i, kind: ft.Kind(), fullName: name, isPtr: true, elemType: ft})
 			continue
 		}
 
@@ -205,18 +219,35 @@ func populateNode[T any](n *structNode, parent reflect.Value, c *Container[T], s
 		_, provided = os.LookupEnv(envNameForFlagName(n.fullName))
 	}
 
-	switch {
-	case isIntKind(n.kind):
-		parent.Field(n.index).SetInt(*c.intVariables[n.fullName])
-	case n.kind == reflect.String:
-		parent.Field(n.index).SetString(*c.stringVariables[n.fullName])
-	case n.kind == reflect.Bool:
-		parent.Field(n.index).SetBool(*c.boolVariables[n.fullName])
-	case isFloatKind(n.kind):
-		parent.Field(n.index).SetFloat(*c.floatVariables[n.fullName])
-	case isUintKind(n.kind):
-		parent.Field(n.index).SetUint(*c.uintVariables[n.fullName])
+	if n.isPtr {
+		if !provided {
+			return false
+		}
+		target := reflect.New(n.elemType).Elem()
+		writeLeafScalar(target, n, c)
+		parent.Field(n.index).Set(target.Addr())
+		return true
 	}
 
+	writeLeafScalar(parent.Field(n.index), n, c)
 	return provided
+}
+
+// writeLeafScalar writes n's resolved value into v, which must be
+// addressable and of kind n.kind. v is either a struct field directly (a
+// non-pointer leaf) or a scratch value that will subsequently be addressed
+// and assigned to a pointer field (a pointer-scalar leaf).
+func writeLeafScalar[T any](v reflect.Value, n *structNode, c *Container[T]) {
+	switch {
+	case isIntKind(n.kind):
+		v.SetInt(*c.intVariables[n.fullName])
+	case n.kind == reflect.String:
+		v.SetString(*c.stringVariables[n.fullName])
+	case n.kind == reflect.Bool:
+		v.SetBool(*c.boolVariables[n.fullName])
+	case isFloatKind(n.kind):
+		v.SetFloat(*c.floatVariables[n.fullName])
+	case isUintKind(n.kind):
+		v.SetUint(*c.uintVariables[n.fullName])
+	}
 }
