@@ -30,3 +30,63 @@ If you want to pass arguments for something like a sub command you can use the s
 `GetBool("bool")` will return `true`
 
 The boolFlag will be set to true and the commentFlag will be set to "text".
+
+## Struct flags
+
+`AddFlagsForStruct` derives flags (and, via the usual env var fallback,
+environment variables) from a struct's `flag:"..."` tags. Struct-typed and
+pointer-to-struct-typed fields are supported and recursed into, to
+arbitrary depth — their own tag becomes the prefix for the fields nested
+inside them:
+
+```go
+type Config struct {
+    Name     string `flag:"name"`
+    BindHttp struct {
+        IP   string `flag:"ip"`
+        Port uint   `flag:"port"`
+    } `flag:"http"`
+    BindGrpc struct {
+        IP   string `flag:"ip"`
+        Port uint   `flag:"port"`
+    } `flag:"grpc"`
+}
+```
+
+or with a defined struct type, reused by value or by pointer:
+
+```go
+type Binding struct {
+    IP   string `flag:"ip"`
+    Port uint   `flag:"port"`
+}
+
+type Config struct {
+    Name     string   `flag:"name"`
+    BindHttp Binding  `flag:"http"`
+    BindGrpc *Binding `flag:"grpc"`
+}
+```
+
+Both produce `-name -http-ip -http-port -grpc-ip -grpc-port` (prefixed by
+whatever prefix is passed to `AddFlagsForStruct`). Environment variable
+names are derived the same way as for any other flag: the flag name
+upper-cased with `-` replaced by `_`, optionally prefixed via
+`SetEnvPrefix`.
+
+A pointer-to-struct field (`*Binding` above) is left `nil` by `Parse()`
+unless at least one flag or environment variable inside it was actually
+supplied; a value-typed field (`Binding`) is always populated. `Parse()` on
+the container must be called after the package-level `flag.Parse()`, since
+presence is determined in part by which flags were explicitly set on the
+command line.
+
+```go
+a := &Config{}
+c, err := flag.AddFlagsForStruct("app", a)
+if err != nil {
+    panic(err)
+}
+flag.Parse()
+cfg := c.Parse()
+```
