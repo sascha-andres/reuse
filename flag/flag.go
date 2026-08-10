@@ -152,6 +152,15 @@ func StringSliceVarWithoutEnv(name string, value []string, usage string) func() 
 	}
 }
 
+// BoolP defines a bool flag with specified name and usage string. There is no default
+// value parameter: callers that need to know whether the flag was explicitly provided
+// (via command line or environment variable) rather than left at its zero value should
+// check presence themselves, e.g. with Visit or by looking up the environment variable.
+// The return value is the address of a bool variable that stores the value of the flag.
+func BoolP(name, usage string) *bool {
+	return Bool(name, false, usage)
+}
+
 // durationFromEnv returns parsed duration from environment variable. On error returning default value
 func durationFromEnv(name string, value time.Duration) time.Duration {
 	val, found := os.LookupEnv(envNameForFlagName(name))
@@ -230,6 +239,14 @@ func Float64VarWithoutEnv(p *float64, name string, value float64, usage string) 
 	f.Float64Var(p, name, value, usage)
 }
 
+// Float64P defines a float64 flag with specified name and usage string. There is no
+// default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of a float64 variable that stores the value of the flag.
+func Float64P(name, usage string) *float64 {
+	return Float64(name, 0.0, usage)
+}
+
 // Func defines a flag with the specified name and usage string. Each time the flag is seen,
 // fn is called with the value of the flag. If fn returns a non-nil error, it will be treated
 // as a flag value parsing error.
@@ -289,6 +306,14 @@ func Int64Var(p *int64, name string, value int64, usage string) {
 // The argument p points to an int64 variable in which to store the value of the flag.
 func Int64VarWithoutEnv(p *int64, name string, value int64, usage string) {
 	f.Int64Var(p, name, value, usage)
+}
+
+// Int64P defines an int64 flag with specified name and usage string. There is no
+// default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of an int64 variable that stores the value of the flag.
+func Int64P(name, usage string) *int64 {
+	return Int64(name, 0, usage)
 }
 
 // IntVarWithoutEnv defines an int flag with specified name, default value, and usage string.
@@ -435,6 +460,14 @@ func StringVarWithoutEnv(p *string, name string, value string, usage string) {
 	f.StringVar(p, name, value, usage)
 }
 
+// StringP defines a string flag with specified name and usage string. There is no
+// default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of a string variable that stores the value of the flag.
+func StringP(name, usage string) *string {
+	return String(name, "", usage)
+}
+
 // uint64FromEnv returns parsed int64 from environment variable. On error returning default value
 func uint64FromEnv(name string, value uint64) uint64 {
 	val, found := os.LookupEnv(envNameForFlagName(name))
@@ -482,6 +515,14 @@ func Uint64Var(p *uint64, name string, value uint64, usage string) {
 // The argument p points to a uint64 variable in which to store the value of the flag.
 func Uint64VarWithoutEnv(p *uint64, name string, value uint64, usage string) {
 	f.Uint64Var(p, name, value, usage)
+}
+
+// Uint64P defines a uint64 flag with specified name and usage string. There is no
+// default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of a uint64 variable that stores the value of the flag.
+func Uint64P(name, usage string) *uint64 {
+	return Uint64(name, 0, usage)
 }
 
 // UintVar defines a uint flag with specified name, default value, and usage string.
