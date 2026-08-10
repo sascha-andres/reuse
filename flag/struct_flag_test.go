@@ -263,6 +263,133 @@ func TestAddFlagsForStruct_PointerInPointerPropagatesPresence(t *testing.T) {
 	}
 }
 
+type pointerScalarConfig struct {
+	Timeout *int   `flag:"timeout"`
+	Label   string `flag:"label"`
+}
+
+func TestAddFlagsForStruct_PointerScalarLeaf_PresentViaFlag(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	cfg := &pointerScalarConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd", "-app-timeout", "30", "-app-label", "svc"}
+	Parse()
+
+	got := c.Parse()
+	if got.Timeout == nil {
+		t.Fatal("Timeout = nil, want non-nil")
+	}
+	if *got.Timeout != 30 {
+		t.Errorf("*Timeout = %d, want 30", *got.Timeout)
+	}
+}
+
+func TestAddFlagsForStruct_PointerScalarLeaf_PresentViaEnv(t *testing.T) {
+	resetForStructFlagTest(t)
+	setEnv(t, "APP_TIMEOUT", "45")
+
+	cfg := &pointerScalarConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd"}
+	Parse()
+
+	got := c.Parse()
+	if got.Timeout == nil {
+		t.Fatal("Timeout = nil, want non-nil")
+	}
+	if *got.Timeout != 45 {
+		t.Errorf("*Timeout = %d, want 45", *got.Timeout)
+	}
+}
+
+func TestAddFlagsForStruct_PointerScalarLeaf_AbsentStaysNil(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	cfg := &pointerScalarConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd", "-app-label", "svc"}
+	Parse()
+
+	got := c.Parse()
+	if got.Timeout != nil {
+		t.Errorf("Timeout = %d, want nil", *got.Timeout)
+	}
+	if got.Label != "svc" {
+		t.Errorf("Label = %q, want %q", got.Label, "svc")
+	}
+}
+
+// A pointer-scalar leaf nested inside a value-typed branch and a
+// pointer-typed branch: its nil-ness is independent of the branch's.
+type pointerScalarInValueBranch struct {
+	Retries *int `flag:"retries"`
+}
+type pointerScalarInPointerBranch struct {
+	Retries *int `flag:"retries"`
+}
+type nestedPointerScalarConfig struct {
+	ValueBranch   pointerScalarInValueBranch    `flag:"value"`
+	PointerBranch *pointerScalarInPointerBranch `flag:"ptr"`
+}
+
+func TestAddFlagsForStruct_PointerScalarLeaf_NestedInValueBranch(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	cfg := &nestedPointerScalarConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd", "-app-value-retries", "3"}
+	Parse()
+
+	got := c.Parse()
+	if got.ValueBranch.Retries == nil || *got.ValueBranch.Retries != 3 {
+		t.Errorf("ValueBranch.Retries = %+v, want *3", got.ValueBranch.Retries)
+	}
+	if got.PointerBranch != nil {
+		t.Errorf("PointerBranch = %+v, want nil (its own leaf never provided)", *got.PointerBranch)
+	}
+}
+
+func TestAddFlagsForStruct_PointerScalarLeaf_NestedInPointerBranch(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	cfg := &nestedPointerScalarConfig{}
+	c, err := AddFlagsForStruct("app", cfg)
+	if err != nil {
+		t.Fatalf("AddFlagsForStruct: %v", err)
+	}
+
+	os.Args = []string{"cmd", "-app-ptr-retries", "5"}
+	Parse()
+
+	got := c.Parse()
+	if got.ValueBranch.Retries != nil {
+		t.Errorf("ValueBranch.Retries = %d, want nil", *got.ValueBranch.Retries)
+	}
+	if got.PointerBranch == nil {
+		t.Fatal("PointerBranch = nil, want non-nil")
+	}
+	if got.PointerBranch.Retries == nil || *got.PointerBranch.Retries != 5 {
+		t.Errorf("PointerBranch.Retries = %+v, want *5", got.PointerBranch.Retries)
+	}
+}
+
 func TestAddFlagsForStruct_PointerInPointerAbsentStaysNil(t *testing.T) {
 	resetForStructFlagTest(t)
 
