@@ -36,6 +36,48 @@ var testCasesGetVerbs = []verbTestCase{
 	},
 }
 
+func TestPConstructors_DefaultToZeroValue(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	s := StringP("p-string", "")
+	i := Int64P("p-int64", "")
+	b := BoolP("p-bool", "")
+	fl := Float64P("p-float64", "")
+	u := Uint64P("p-uint64", "")
+
+	os.Args = []string{"cmd"}
+	Parse()
+
+	if *s != "" || *i != 0 || *b != false || *fl != 0.0 || *u != 0 {
+		t.Fatalf("expected zero values, got string=%q int64=%d bool=%t float64=%v uint64=%d", *s, *i, *b, *fl, *u)
+	}
+}
+
+func TestPConstructors_ExplicitValueAndVisit(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	s := StringP("p-string", "")
+	i := Int64P("p-int64", "")
+	b := BoolP("p-bool", "")
+	fl := Float64P("p-float64", "")
+	u := Uint64P("p-uint64", "")
+
+	os.Args = []string{"cmd", "-p-string", "hi", "-p-int64", "-7", "-p-bool", "-p-float64", "1.5", "-p-uint64", "9"}
+	Parse()
+
+	if *s != "hi" || *i != -7 || *b != true || *fl != 1.5 || *u != 9 {
+		t.Fatalf("unexpected values: string=%q int64=%d bool=%t float64=%v uint64=%d", *s, *i, *b, *fl, *u)
+	}
+
+	set := map[string]bool{}
+	Visit(func(fl *flag.Flag) { set[fl.Name] = true })
+	for _, name := range []string{"p-string", "p-int64", "p-bool", "p-float64", "p-uint64"} {
+		if !set[name] {
+			t.Errorf("Visit did not report %q as set", name)
+		}
+	}
+}
+
 func TestGetVerbs(t *testing.T) {
 	t.Skip("this test is broken, but I don't know how to fix it, I can't really change the os.Args")
 	oldArgs := os.Args
