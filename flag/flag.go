@@ -20,6 +20,35 @@ var (
 	arraySeparator        string = ","
 )
 
+// pResolution is a pending *VarP registration: resolve is invoked by
+// ResolveP with whether name was explicitly provided (CLI flag or
+// environment variable), and is responsible for setting the caller's
+// outer pointer to nil or to the resolved value.
+type pResolution struct {
+	name    string
+	resolve func(provided bool)
+}
+
+var pendingResolutions []pResolution
+
+// ResolveP finalizes every pointer registered via a *VarP function
+// (StringVarP, Int64VarP, BoolVarP, Float64VarP, Uint64VarP,
+// DurationVarP), setting each to nil if its flag was never explicitly
+// provided, or to a pointer to the resolved value otherwise. Must be
+// called after Parse.
+func ResolveP() {
+	set := make(map[string]bool)
+	Visit(func(fl *f.Flag) { set[fl.Name] = true })
+	for _, r := range pendingResolutions {
+		provided := set[r.name]
+		if !provided {
+			_, provided = os.LookupEnv(envNameForFlagName(r.name))
+		}
+		r.resolve(provided)
+	}
+	pendingResolutions = nil
+}
+
 // Usage prints a usage message documenting all defined command-line flags
 // to CommandLine's output, which by default is os.Stderr.
 // It is called when an error occurs while parsing flags.
@@ -152,6 +181,34 @@ func StringSliceVarWithoutEnv(name string, value []string, usage string) func() 
 	}
 }
 
+// BoolP defines a bool flag with specified name and usage string. There is no default
+// value parameter: callers that need to know whether the flag was explicitly provided
+// (via command line or environment variable) rather than left at its zero value should
+// check presence themselves, e.g. with Visit or by looking up the environment variable.
+// The return value is the address of a bool variable that stores the value of the flag.
+func BoolP(name, usage string) *bool {
+	return Bool(name, false, usage)
+}
+
+// BoolVarP defines a bool flag with specified name and usage string. The argument p
+// points to a *bool variable that ResolveP sets to nil if the flag was never explicitly
+// provided (via command line or environment variable), or to the resolved value
+// otherwise. Must be followed by a call to Parse and then ResolveP.
+func BoolVarP(p **bool, name, usage string) {
+	inner := BoolP(name, usage)
+	pendingResolutions = append(pendingResolutions, pResolution{
+		name: name,
+		resolve: func(provided bool) {
+			if !provided {
+				*p = nil
+				return
+			}
+			v := *inner
+			*p = &v
+		},
+	})
+}
+
 // durationFromEnv returns parsed duration from environment variable. On error returning default value
 func durationFromEnv(name string, value time.Duration) time.Duration {
 	val, found := os.LookupEnv(envNameForFlagName(name))
@@ -184,6 +241,34 @@ func DurationWithoutEnv(name string, value time.Duration, usage string) *time.Du
 // The flag accepts a value acceptable to time.ParseDuration.
 func DurationVar(p *time.Duration, name string, value time.Duration, usage string) {
 	DurationVarWithoutEnv(p, name, durationFromEnv(name, value), usage)
+}
+
+// DurationP defines a time.Duration flag with specified name and usage string. There is
+// no default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of a time.Duration variable that stores the value of
+// the flag. The flag accepts a value acceptable to time.ParseDuration.
+func DurationP(name, usage string) *time.Duration {
+	return Duration(name, 0, usage)
+}
+
+// DurationVarP defines a time.Duration flag with specified name and usage string. The
+// argument p points to a *time.Duration variable that ResolveP sets to nil if the flag
+// was never explicitly provided (via command line or environment variable), or to the
+// resolved value otherwise. Must be followed by a call to Parse and then ResolveP.
+func DurationVarP(p **time.Duration, name, usage string) {
+	inner := DurationP(name, usage)
+	pendingResolutions = append(pendingResolutions, pResolution{
+		name: name,
+		resolve: func(provided bool) {
+			if !provided {
+				*p = nil
+				return
+			}
+			v := *inner
+			*p = &v
+		},
+	})
 }
 
 // DurationVarWithoutEnv defines a time.Duration flag with specified name, default value, and usage string.
@@ -228,6 +313,33 @@ func Float64Var(p *float64, name string, value float64, usage string) {
 // The argument p points to a float64 variable in which to store the value of the flag.
 func Float64VarWithoutEnv(p *float64, name string, value float64, usage string) {
 	f.Float64Var(p, name, value, usage)
+}
+
+// Float64P defines a float64 flag with specified name and usage string. There is no
+// default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of a float64 variable that stores the value of the flag.
+func Float64P(name, usage string) *float64 {
+	return Float64(name, 0.0, usage)
+}
+
+// Float64VarP defines a float64 flag with specified name and usage string. The argument
+// p points to a *float64 variable that ResolveP sets to nil if the flag was never
+// explicitly provided (via command line or environment variable), or to the resolved
+// value otherwise. Must be followed by a call to Parse and then ResolveP.
+func Float64VarP(p **float64, name, usage string) {
+	inner := Float64P(name, usage)
+	pendingResolutions = append(pendingResolutions, pResolution{
+		name: name,
+		resolve: func(provided bool) {
+			if !provided {
+				*p = nil
+				return
+			}
+			v := *inner
+			*p = &v
+		},
+	})
 }
 
 // Func defines a flag with the specified name and usage string. Each time the flag is seen,
@@ -289,6 +401,33 @@ func Int64Var(p *int64, name string, value int64, usage string) {
 // The argument p points to an int64 variable in which to store the value of the flag.
 func Int64VarWithoutEnv(p *int64, name string, value int64, usage string) {
 	f.Int64Var(p, name, value, usage)
+}
+
+// Int64P defines an int64 flag with specified name and usage string. There is no
+// default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of an int64 variable that stores the value of the flag.
+func Int64P(name, usage string) *int64 {
+	return Int64(name, 0, usage)
+}
+
+// Int64VarP defines an int64 flag with specified name and usage string. The argument p
+// points to a *int64 variable that ResolveP sets to nil if the flag was never explicitly
+// provided (via command line or environment variable), or to the resolved value
+// otherwise. Must be followed by a call to Parse and then ResolveP.
+func Int64VarP(p **int64, name, usage string) {
+	inner := Int64P(name, usage)
+	pendingResolutions = append(pendingResolutions, pResolution{
+		name: name,
+		resolve: func(provided bool) {
+			if !provided {
+				*p = nil
+				return
+			}
+			v := *inner
+			*p = &v
+		},
+	})
 }
 
 // IntVarWithoutEnv defines an int flag with specified name, default value, and usage string.
@@ -435,6 +574,33 @@ func StringVarWithoutEnv(p *string, name string, value string, usage string) {
 	f.StringVar(p, name, value, usage)
 }
 
+// StringP defines a string flag with specified name and usage string. There is no
+// default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of a string variable that stores the value of the flag.
+func StringP(name, usage string) *string {
+	return String(name, "", usage)
+}
+
+// StringVarP defines a string flag with specified name and usage string. The argument p
+// points to a *string variable that ResolveP sets to nil if the flag was never
+// explicitly provided (via command line or environment variable), or to the resolved
+// value otherwise. Must be followed by a call to Parse and then ResolveP.
+func StringVarP(p **string, name, usage string) {
+	inner := StringP(name, usage)
+	pendingResolutions = append(pendingResolutions, pResolution{
+		name: name,
+		resolve: func(provided bool) {
+			if !provided {
+				*p = nil
+				return
+			}
+			v := *inner
+			*p = &v
+		},
+	})
+}
+
 // uint64FromEnv returns parsed int64 from environment variable. On error returning default value
 func uint64FromEnv(name string, value uint64) uint64 {
 	val, found := os.LookupEnv(envNameForFlagName(name))
@@ -482,6 +648,33 @@ func Uint64Var(p *uint64, name string, value uint64, usage string) {
 // The argument p points to a uint64 variable in which to store the value of the flag.
 func Uint64VarWithoutEnv(p *uint64, name string, value uint64, usage string) {
 	f.Uint64Var(p, name, value, usage)
+}
+
+// Uint64P defines a uint64 flag with specified name and usage string. There is no
+// default value parameter: callers that need to know whether the flag was explicitly
+// provided rather than left at its zero value should check presence themselves.
+// The return value is the address of a uint64 variable that stores the value of the flag.
+func Uint64P(name, usage string) *uint64 {
+	return Uint64(name, 0, usage)
+}
+
+// Uint64VarP defines a uint64 flag with specified name and usage string. The argument p
+// points to a *uint64 variable that ResolveP sets to nil if the flag was never
+// explicitly provided (via command line or environment variable), or to the resolved
+// value otherwise. Must be followed by a call to Parse and then ResolveP.
+func Uint64VarP(p **uint64, name, usage string) {
+	inner := Uint64P(name, usage)
+	pendingResolutions = append(pendingResolutions, pResolution{
+		name: name,
+		resolve: func(provided bool) {
+			if !provided {
+				*p = nil
+				return
+			}
+			v := *inner
+			*p = &v
+		},
+	})
 }
 
 // UintVar defines a uint flag with specified name, default value, and usage string.

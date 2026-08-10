@@ -30,3 +30,114 @@ If you want to pass arguments for something like a sub command you can use the s
 `GetBool("bool")` will return `true`
 
 The boolFlag will be set to true and the commentFlag will be set to "text".
+
+## Struct flags
+
+`AddFlagsForStruct` derives flags (and, via the usual env var fallback,
+environment variables) from a struct's `flag:"..."` tags. Struct-typed and
+pointer-to-struct-typed fields are supported and recursed into, to
+arbitrary depth — their own tag becomes the prefix for the fields nested
+inside them:
+
+```go
+type Config struct {
+    Name     string `flag:"name"`
+    BindHttp struct {
+        IP   string `flag:"ip"`
+        Port uint   `flag:"port"`
+    } `flag:"http"`
+    BindGrpc struct {
+        IP   string `flag:"ip"`
+        Port uint   `flag:"port"`
+    } `flag:"grpc"`
+}
+```
+
+or with a defined struct type, reused by value or by pointer:
+
+```go
+type Binding struct {
+    IP   string `flag:"ip"`
+    Port uint   `flag:"port"`
+}
+
+type Config struct {
+    Name     string   `flag:"name"`
+    BindHttp Binding  `flag:"http"`
+    BindGrpc *Binding `flag:"grpc"`
+}
+```
+
+Both produce `-name -http-ip -http-port -grpc-ip -grpc-port` (prefixed by
+whatever prefix is passed to `AddFlagsForStruct`). Environment variable
+names are derived the same way as for any other flag: the flag name
+upper-cased with `-` replaced by `_`, optionally prefixed via
+`SetEnvPrefix`.
+
+A pointer-to-struct field (`*Binding` above) is left `nil` by `Parse()`
+unless at least one flag or environment variable inside it was actually
+supplied; a value-typed field (`Binding`) is always populated. `Parse()` on
+the container must be called after the package-level `flag.Parse()`, since
+presence is determined in part by which flags were explicitly set on the
+command line.
+
+```go
+a := &Config{}
+c, err := flag.AddFlagsForStruct("app", a)
+if err != nil {
+    panic(err)
+}
+flag.Parse()
+cfg := c.Parse()
+```
+
+Pointer-to-scalar leaf fields (`*string`, `*int`/`*int32`/..., `*bool`,
+`*float64`/`*float32`, `*uint`/`*uint32`/...) are supported the same way:
+`nil` unless the flag or its environment variable was explicitly provided,
+regardless of nesting depth or whether the containing branch is itself a
+value or a pointer:
+
+```go
+type Config struct {
+    Timeout *int `flag:"timeout"`
+}
+```
+
+`cfg.Timeout` stays `nil` unless `-timeout` (or the corresponding env var)
+was set — even `-timeout=0` makes it a non-nil pointer to `0`.
+
+`time.Duration` leaf fields are parsed as duration strings (`"5s"`,
+`"1h30m"`, ...) rather than raw nanosecond counts, both as a value
+(`time.Duration`, always populated like any other value leaf) and as a
+pointer (`*time.Duration`, nil-unless-provided like any other pointer
+leaf):
+
+```go
+type Config struct {
+    Timeout  time.Duration  `flag:"timeout"`
+    Deadline *time.Duration `flag:"deadline"`
+}
+```
+
+`-timeout 5s` (or `TIMEOUT=5s`) sets `Timeout`; `Deadline` stays `nil`
+unless `-deadline` (or `DEADLINE`) was explicitly given.
+
+## Nilable flags
+
+Outside of struct flags, `StringVarP`/`Int64VarP`/`BoolVarP`/
+`Float64VarP`/`Uint64VarP`/`DurationVarP` give an ordinary variable the
+same nil-unless-provided behavior. Unlike `StringVar`/`Int64Var`/etc.,
+which write into an already-allocated `*T`, these take the address of a
+pointer variable (`**T`) and leave it `nil` unless the flag was explicitly
+set via CLI or environment variable:
+
+```go
+var timeout *int64
+flag.Int64VarP(&timeout, "timeout", "timeout in seconds")
+flag.Parse()
+flag.ResolveP()
+// timeout == nil unless -timeout or TIMEOUT was set
+```
+
+`ResolveP` must be called once, after `Parse`, and resolves every pointer
+registered via a `*VarP` call up to that point.

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/sascha-andres/reuse/flag"
 )
 
@@ -14,6 +16,11 @@ type Config struct {
 	SubStruct struct {
 		Value uint `flag:"val"`
 	} `flag:"sub"`
+}
+
+func init() {
+	os.Setenv("STRUCTFLAG_TEST_NAME", "NAME")
+	os.Setenv("STRUCTFLAG_TEST_SUB_VAL", "1")
 }
 
 func main() {
