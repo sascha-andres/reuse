@@ -105,3 +105,19 @@ type Config struct {
 
 `cfg.Timeout` stays `nil` unless `-timeout` (or the corresponding env var)
 was set — even `-timeout=0` makes it a non-nil pointer to `0`.
+
+`time.Duration` leaf fields are parsed as duration strings (`"5s"`,
+`"1h30m"`, ...) rather than raw nanosecond counts, both as a value
+(`time.Duration`, always populated like any other value leaf) and as a
+pointer (`*time.Duration`, nil-unless-provided like any other pointer
+leaf):
+
+```go
+type Config struct {
+    Timeout  time.Duration  `flag:"timeout"`
+    Deadline *time.Duration `flag:"deadline"`
+}
+```
+
+`-timeout 5s` (or `TIMEOUT=5s`) sets `Timeout`; `Deadline` stays `nil`
+unless `-deadline` (or `DEADLINE`) was explicitly given.
