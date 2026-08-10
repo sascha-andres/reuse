@@ -90,3 +90,18 @@ if err != nil {
 flag.Parse()
 cfg := c.Parse()
 ```
+
+Pointer-to-scalar leaf fields (`*string`, `*int`/`*int32`/..., `*bool`,
+`*float64`/`*float32`, `*uint`/`*uint32`/...) are supported the same way:
+`nil` unless the flag or its environment variable was explicitly provided,
+regardless of nesting depth or whether the containing branch is itself a
+value or a pointer:
+
+```go
+type Config struct {
+    Timeout *int `flag:"timeout"`
+}
+```
+
+`cfg.Timeout` stays `nil` unless `-timeout` (or the corresponding env var)
+was set — even `-timeout=0` makes it a non-nil pointer to `0`.
