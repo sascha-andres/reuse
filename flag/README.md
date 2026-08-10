@@ -121,3 +121,23 @@ type Config struct {
 
 `-timeout 5s` (or `TIMEOUT=5s`) sets `Timeout`; `Deadline` stays `nil`
 unless `-deadline` (or `DEADLINE`) was explicitly given.
+
+## Nilable flags
+
+Outside of struct flags, `StringVarP`/`Int64VarP`/`BoolVarP`/
+`Float64VarP`/`Uint64VarP`/`DurationVarP` give an ordinary variable the
+same nil-unless-provided behavior. Unlike `StringVar`/`Int64Var`/etc.,
+which write into an already-allocated `*T`, these take the address of a
+pointer variable (`**T`) and leave it `nil` unless the flag was explicitly
+set via CLI or environment variable:
+
+```go
+var timeout *int64
+flag.Int64VarP(&timeout, "timeout", "timeout in seconds")
+flag.Parse()
+flag.ResolveP()
+// timeout == nil unless -timeout or TIMEOUT was set
+```
+
+`ResolveP` must be called once, after `Parse`, and resolves every pointer
+registered via a `*VarP` call up to that point.
