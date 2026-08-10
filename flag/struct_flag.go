@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 )
 
 // tagName is the name of the tag for structs
@@ -16,13 +17,19 @@ const tagName = "flag"
 // registered for it; a node with children != nil is a struct, or
 // pointer-to-struct, branch that was recursed into.
 type structNode struct {
-	index    int
-	isPtr    bool
-	elemType reflect.Type
-	children []*structNode
-	kind     reflect.Kind
-	fullName string
+	index      int
+	isPtr      bool
+	isDuration bool
+	elemType   reflect.Type
+	children   []*structNode
+	kind       reflect.Kind
+	fullName   string
 }
+
+// durationType is the reflect.Type of time.Duration, used to distinguish a
+// genuine duration field from a plain int64-Kind field — Kind() alone can't
+// tell them apart, since time.Duration is defined as int64.
+var durationType = reflect.TypeFor[time.Duration]()
 
 // Container holds the variables
 type Container[T any] struct {
@@ -31,11 +38,12 @@ type Container[T any] struct {
 
 	children []*structNode
 
-	intVariables    map[string]*int64
-	stringVariables map[string]*string
-	boolVariables   map[string]*bool
-	floatVariables  map[string]*float64
-	uintVariables   map[string]*uint64
+	intVariables      map[string]*int64
+	stringVariables   map[string]*string
+	boolVariables     map[string]*bool
+	floatVariables    map[string]*float64
+	uintVariables     map[string]*uint64
+	durationVariables map[string]*time.Duration
 }
 
 // AddFlagsForStruct adds flags for the given struct.
@@ -56,13 +64,14 @@ func AddFlagsForStruct[T any](prefix string, s *T) (*Container[T], error) {
 	}
 
 	c := &Container[T]{
-		prefix:          prefix,
-		t:               s,
-		intVariables:    make(map[string]*int64),
-		stringVariables: make(map[string]*string),
-		boolVariables:   make(map[string]*bool),
-		floatVariables:  make(map[string]*float64),
-		uintVariables:   make(map[string]*uint64),
+		prefix:            prefix,
+		t:                 s,
+		intVariables:      make(map[string]*int64),
+		stringVariables:   make(map[string]*string),
+		boolVariables:     make(map[string]*bool),
+		floatVariables:    make(map[string]*float64),
+		uintVariables:     make(map[string]*uint64),
+		durationVariables: make(map[string]*time.Duration),
 	}
 	c.children = buildNodes(prefix, t, c)
 
@@ -111,6 +120,8 @@ func buildNodes[T any](prefix string, t reflect.Type, c *Container[T]) []*struct
 
 		if isPtr {
 			switch {
+			case ft == durationType:
+				c.durationVariables[name] = DurationP(name, usage)
 			case isIntKind(ft.Kind()):
 				c.intVariables[name] = Int64P(name, usage)
 			case ft.Kind() == reflect.String:
@@ -124,11 +135,13 @@ func buildNodes[T any](prefix string, t reflect.Type, c *Container[T]) []*struct
 			default:
 				continue
 			}
-			nodes = append(nodes, &structNode{index: i, kind: ft.Kind(), fullName: name, isPtr: true, elemType: ft})
+			nodes = append(nodes, &structNode{index: i, kind: ft.Kind(), fullName: name, isPtr: true, isDuration: ft == durationType, elemType: ft})
 			continue
 		}
 
 		switch {
+		case ft == durationType:
+			c.durationVariables[name] = Duration(name, 0, usage)
 		case isIntKind(ft.Kind()):
 			c.intVariables[name] = Int64(name, 0, usage)
 		case ft.Kind() == reflect.String:
@@ -142,7 +155,7 @@ func buildNodes[T any](prefix string, t reflect.Type, c *Container[T]) []*struct
 		default:
 			continue
 		}
-		nodes = append(nodes, &structNode{index: i, kind: ft.Kind(), fullName: name})
+		nodes = append(nodes, &structNode{index: i, kind: ft.Kind(), fullName: name, isDuration: ft == durationType})
 	}
 	return nodes
 }
@@ -239,6 +252,8 @@ func populateNode[T any](n *structNode, parent reflect.Value, c *Container[T], s
 // and assigned to a pointer field (a pointer-scalar leaf).
 func writeLeafScalar[T any](v reflect.Value, n *structNode, c *Container[T]) {
 	switch {
+	case n.isDuration:
+		v.SetInt(int64(*c.durationVariables[n.fullName]))
 	case isIntKind(n.kind):
 		v.SetInt(*c.intVariables[n.fullName])
 	case n.kind == reflect.String:
