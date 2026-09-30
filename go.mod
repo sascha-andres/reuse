@@ -1,4 +1,4 @@
-module github.com/sascha-andres/reuse
+module go.livingit.de/reuse
 
 go 1.24
 
