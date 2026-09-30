@@ -1,6 +1,6 @@
 package functional
 
-import "github.com/sascha-andres/reuse"
+import "go.livingit.de/reuse"
 
 // Filter applies the provided function to each element in the input slice and
 // returns a new slice containing only the elements for which the function
