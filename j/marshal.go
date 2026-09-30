@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/sascha-andres/reuse"
+	"go.livingit.de/reuse"
 )
 
 // UnmarshalFile reads a JSON file, parses its content into a Go type T, and returns a pointer to the unmarshalled object.
