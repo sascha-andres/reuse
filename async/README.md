@@ -17,7 +17,7 @@ The `async` package allows you to execute functions asynchronously and wait for 
 ## Installation
 
 ```bash
-go get github.com/andres/reuse/async
+go get go.livingit.de/reuse/async
 ```
 
 ## Usage
@@ -30,7 +30,7 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/andres/reuse/async"
+    "go.livingit.de/reuse/async"
 )
 
 func main() {

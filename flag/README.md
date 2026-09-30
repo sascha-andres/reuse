@@ -17,17 +17,19 @@ This flag package provides a list of verbs. That is something passed to the comm
 
 The boolFlag will be set to true and the commentFlag will be set to "text".
 
+Flags are recognized in any of the usual forms — `-flag value`,
+`-flag=value`, `--flag` — anywhere in the argument list, before, between,
+or after verbs.
+
 ## Separated
 
-If you want to pass arguments for something like a sub command you can use the separate feature. Activate it using `flag.SetSeparate()`. Everything after `--` will be treated as a separate from command line and not parsed as verbs or flags. 
+If you want to pass arguments for something like a sub command you can use the separate feature. Activate it using `flag.SetSeparated()`. Everything after `--` will be treated as separate from the command line and not parsed as verbs or flags.
 
     cmd verb -bool verb2 -comment text -- separated from command line
 
 `GetVerbs()` will return `[]string{"verb", "verb2"}`
 
-`GetSeparate()` will return `[]string{"separated", "from", "command", "line"}`
-
-`GetBool("bool")` will return `true`
+`GetSeparated()` will return `[]string{"separated", "from", "command", "line"}`
 
 The boolFlag will be set to true and the commentFlag will be set to "text".
 
