@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sascha-andres/reuse/flag"
+	"go.livingit.de/reuse/flag"
 )
 
 type Config struct {
