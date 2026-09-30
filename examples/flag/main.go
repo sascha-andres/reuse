@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/sascha-andres/reuse/flag"
+	"go.livingit.de/reuse/flag"
 )
 
 func main() {
