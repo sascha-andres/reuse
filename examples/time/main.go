@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/sascha-andres/reuse"
+	"go.livingit.de/reuse"
 )
 
 func main() {
