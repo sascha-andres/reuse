@@ -17,17 +17,20 @@ func resetForStructFlagTest(t *testing.T) {
 	oldBooleanFlags := booleanFlags
 	oldEnvPrefix := envPrefix
 	oldOverridden := overriddenEnvPrefixes
+	oldVerbs := verbs
 	t.Cleanup(func() {
 		f.CommandLine = oldCommandLine
 		os.Args = oldArgs
 		booleanFlags = oldBooleanFlags
 		envPrefix = oldEnvPrefix
 		overriddenEnvPrefixes = oldOverridden
+		verbs = oldVerbs
 	})
 	f.CommandLine = f.NewFlagSet("test", f.ContinueOnError)
 	booleanFlags = nil
 	envPrefix = ""
 	overriddenEnvPrefixes = nil
+	verbs = nil
 }
 
 type binding struct {

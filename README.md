@@ -17,3 +17,4 @@ go get go.livingit.de/reuse
 - [0003 — struct_flag: support time.Duration](plans/0003-struct-flag-duration-support.md)
 - [0004 — flag: add *VarP constructors](plans/0004-flag-varp-constructors.md)
 - [0005 — rename module namespace to go.livingit.de/reuse](plans/0005-module-namespace-rename.md)
+- [0006 — flag: stop dropping flags that appear after or between verbs](plans/0006-flag-parse-flags-after-verbs.md)

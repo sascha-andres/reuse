@@ -209,6 +209,118 @@ func TestVarP_PresentViaEnv(t *testing.T) {
 	}
 }
 
+func TestParse_FlagAfterVerb(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	s := String("test", "", "")
+
+	os.Args = []string{"cmd", "verb", "-test", "1"}
+	Parse()
+
+	if *s != "1" {
+		t.Fatalf("got test=%q, want %q", *s, "1")
+	}
+	if got := GetVerbs(); len(got) != 1 || got[0] != "verb" {
+		t.Fatalf("got verbs=%v, want [verb]", got)
+	}
+}
+
+func TestParse_FlagBetweenVerbs(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	s := String("test", "", "")
+
+	os.Args = []string{"cmd", "verb1", "-test", "1", "verb2"}
+	Parse()
+
+	if *s != "1" {
+		t.Fatalf("got test=%q, want %q", *s, "1")
+	}
+	if got := GetVerbs(); len(got) != 2 || got[0] != "verb1" || got[1] != "verb2" {
+		t.Fatalf("got verbs=%v, want [verb1 verb2]", got)
+	}
+}
+
+func TestParse_BooleanFlagBetweenVerbsDoesNotConsumeNextVerb(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	b := Bool("on", false, "")
+
+	os.Args = []string{"cmd", "verb1", "-on", "verb2"}
+	Parse()
+
+	if !*b {
+		t.Fatal("got on=false, want true")
+	}
+	if got := GetVerbs(); len(got) != 2 || got[0] != "verb1" || got[1] != "verb2" {
+		t.Fatalf("got verbs=%v, want [verb1 verb2]", got)
+	}
+}
+
+func TestParse_StringFlagValueWithEmbeddedSpace(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	s := String("test", "", "")
+
+	os.Args = []string{"cmd", "verb1", "-test", "test test", "verb2"}
+	Parse()
+
+	if *s != "test test" {
+		t.Fatalf("got test=%q, want %q", *s, "test test")
+	}
+	if got := GetVerbs(); len(got) != 2 || got[0] != "verb1" || got[1] != "verb2" {
+		t.Fatalf("got verbs=%v, want [verb1 verb2]", got)
+	}
+}
+
+func TestParse_InlineValueFlagBetweenVerbs(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	s := String("test", "", "")
+
+	os.Args = []string{"cmd", "verb1", "-test=1", "verb2"}
+	Parse()
+
+	if *s != "1" {
+		t.Fatalf("got test=%q, want %q", *s, "1")
+	}
+	if got := GetVerbs(); len(got) != 2 || got[0] != "verb1" || got[1] != "verb2" {
+		t.Fatalf("got verbs=%v, want [verb1 verb2]", got)
+	}
+}
+
+func TestParse_DoubleDashBooleanFlagBetweenVerbs(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	b := Bool("on", false, "")
+
+	os.Args = []string{"cmd", "verb1", "--on", "verb2"}
+	Parse()
+
+	if !*b {
+		t.Fatal("got on=false, want true")
+	}
+	if got := GetVerbs(); len(got) != 2 || got[0] != "verb1" || got[1] != "verb2" {
+		t.Fatalf("got verbs=%v, want [verb1 verb2]", got)
+	}
+}
+
+func TestParse_InlineValueBooleanFlagBetweenVerbs(t *testing.T) {
+	resetForStructFlagTest(t)
+
+	b := Bool("on", true, "")
+
+	os.Args = []string{"cmd", "verb1", "-on=false", "verb2"}
+	Parse()
+
+	if *b {
+		t.Fatal("got on=true, want false")
+	}
+	if got := GetVerbs(); len(got) != 2 || got[0] != "verb1" || got[1] != "verb2" {
+		t.Fatalf("got verbs=%v, want [verb1 verb2]", got)
+	}
+}
+
 func TestGetVerbs(t *testing.T) {
 	t.Skip("this test is broken, but I don't know how to fix it, I can't really change the os.Args")
 	oldArgs := os.Args

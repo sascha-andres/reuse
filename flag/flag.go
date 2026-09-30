@@ -458,8 +458,8 @@ func GetSeparated() []string {
 }
 
 // Parse parses the command-line flags from os.Args. Must be called after all flags are defined and before flags are accessed by the program.
-// It differs from stdlib flag package insofar that verbs (flags not starting with -) before the first flag will be stripped
-// and provided for retrieval using GetVerbs
+// It differs from stdlib flag package insofar that verbs (arguments not starting with -) are stripped from
+// anywhere in the argument list, including between or after flags, and provided for retrieval using GetVerbs
 func Parse() {
 	previousIsFlag := false
 	inSeparate := false
@@ -476,10 +476,12 @@ func Parse() {
 			continue
 		}
 		if strings.HasPrefix(v, "-") {
-			if len(verbs) > 0 {
-				break
+			name := strings.TrimLeft(v, "-")
+			hasInlineValue := false
+			if idx := strings.Index(name, "="); idx >= 0 {
+				name, hasInlineValue = name[:idx], true
 			}
-			if !slices.Contains(booleanFlags, strings.TrimPrefix(v, "-")) {
+			if !hasInlineValue && !slices.Contains(booleanFlags, name) {
 				previousIsFlag = true
 			}
 			arguments = append(arguments, v)
@@ -492,10 +494,6 @@ func Parse() {
 			previousIsFlag = false
 		}
 	}
-
-	// re-add the first argument
-	//args := []string{os.Args[0]}
-	//args = append(args, arguments...)
 
 	// Ignore errors; CommandLine is set for ExitOnError.
 	_ = f.CommandLine.Parse(arguments)
