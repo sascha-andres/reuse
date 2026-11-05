@@ -1,3 +1,8 @@
+[tools]
+go = "1.27.3"
+"go:golang.org/x/vuln/cmd/govulncheck" = "1.9.0"
+"go:golang.org/x/tools/gopls" = "0.24.0"
+
 [env]
 GIT_CL_CONFIG_FILE = ".git-cl-config"
 
