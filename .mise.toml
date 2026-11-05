@@ -1,0 +1,4 @@
+[env]
+GIT_CL_CONFIG_FILE = ".git-cl-config"
+
+STRUCTFLAG_TEST_HEIGHT = "300"
