@@ -71,14 +71,3 @@ go get go.livingit.de/reuse
 - **[te](te/)** — `testing`-failing variants of the same pattern:
   `MustGet`, `MustRun`, `ShouldGet`, `ShouldRun`.
 - **[validations](validations/)** — `CreditCard` (Luhn check).
-
-## Plans
-
-- [0001 — struct_flag: support nested structs](plans/0001-struct-flag-nested-support.md)
-- [0002 — struct_flag: support pointer-to-scalar leaf fields](plans/0002-struct-flag-pointer-scalar-leaves.md)
-- [0003 — struct_flag: support time.Duration](plans/0003-struct-flag-duration-support.md)
-- [0004 — flag: add *VarP constructors](plans/0004-flag-varp-constructors.md)
-- [0005 — rename module namespace to go.livingit.de/reuse](plans/0005-module-namespace-rename.md)
-- [0006 — flag: stop dropping flags that appear after or between verbs](plans/0006-flag-parse-flags-after-verbs.md)
-- [0007 — flag: implement RunVerbs](plans/0007-flag-run-verbs.md) ([TODO](plans/0007-flag-run-verbs.todo.md))
-- [0008 — examples: RunVerbs example](plans/0008-runner-example.md) ([TODO](plans/0008-runner-example.todo.md))
