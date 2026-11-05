@@ -80,3 +80,5 @@ go get go.livingit.de/reuse
 - [0004 — flag: add *VarP constructors](plans/0004-flag-varp-constructors.md)
 - [0005 — rename module namespace to go.livingit.de/reuse](plans/0005-module-namespace-rename.md)
 - [0006 — flag: stop dropping flags that appear after or between verbs](plans/0006-flag-parse-flags-after-verbs.md)
+- [0007 — flag: implement RunVerbs](plans/0007-flag-run-verbs.md) ([TODO](plans/0007-flag-run-verbs.todo.md))
+- [0008 — examples: RunVerbs example](plans/0008-runner-example.md) ([TODO](plans/0008-runner-example.todo.md))

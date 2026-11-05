@@ -21,6 +21,43 @@ Flags are recognized in any of the usual forms — `-flag value`,
 `-flag=value`, `--flag` — anywhere in the argument list, before, between,
 or after verbs.
 
+## Run verbs
+
+`RunVerbs` dispatches on the verbs. It takes a nested `map[string]any` and the
+result of `GetVerbs()`. A value is a `Runner`, a plain
+`func(context.Context) error` or a nested `map[string]any`. The key `""` is
+the default of a level.
+
+```go
+flag.Parse()
+err := flag.RunVerbs(ctx, map[string]any{
+    "":      runServer,
+    "serve": runServer,
+    "db": map[string]any{
+        "up":   dbUp,
+        "down": dbDown,
+    },
+}, flag.GetVerbs())
+```
+
+- No verb (or the first argument is not a verb): the `""` entry runs. If it
+  is missing, the result is `ErrNothingToRun` (no arguments) or
+  `ErrNoDefaultRunner`.
+- A verb that is a key: a `Runner` runs, a nested map is used for the next
+  verb. At the nested level, no verb runs the `""` entry of that level.
+- A verb that is not a key: `ErrUnknownVerb`, wrapped with the verb. Check
+  with `errors.Is`.
+- An entry of another type (also a `""` entry that is not a `Runner`):
+  `ErrInvalidVerbList`.
+- The error of a `Runner` is returned unchanged.
+- A typed nil `Runner` or nil `func(context.Context) error` entry panics when
+  it runs. An untyped nil entry gives `ErrInvalidVerbList`.
+
+A runnable example is in `examples/runner`.
+
+A verb starts with `[A-Za-z0-9]` and continues with `[A-Za-z0-9_-]`, for
+example `build`, `dry-run`, `list_all`.
+
 ## Separated
 
 If you want to pass arguments for something like a sub command you can use the separate feature. Activate it using `flag.SetSeparated()`. Everything after `--` will be treated as separate from the command line and not parsed as verbs or flags.
