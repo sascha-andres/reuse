@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 
 	"go.livingit.de/reuse/flag"
 )
@@ -75,6 +77,13 @@ func run(ctx context.Context) error {
 func main() {
 	if err := run(context.Background()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		var uv *flag.UnknownVerbError
+		if errors.As(err, &uv) && len(uv.Suggestions) > 0 {
+			for i, s := range uv.Suggestions {
+				uv.Suggestions[i] = strings.Join(append(slices.Clone(uv.Path), s), " ")
+			}
+			fmt.Fprintf(os.Stderr, "did you mean: %s\n", strings.Join(uv.Suggestions, ", "))
+		}
 		os.Exit(1)
 	}
 }

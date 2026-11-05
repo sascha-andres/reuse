@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -175,6 +176,54 @@ func TestIsVerb(t *testing.T) {
 		t.Run(tt.value, func(t *testing.T) {
 			if got := isVerb(tt.value); got != tt.want {
 				t.Fatalf("isVerb(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRunVerbs_Suggestions(t *testing.T) {
+	noop := Runner(func(context.Context) error { return nil })
+	top := map[string]any{"run": noop, "help": noop, "list": noop, "last": noop, "": noop, "-x": noop}
+	nested := map[string]any{"remote": map[string]any{"add": noop, "rm": noop}}
+
+	tests := []struct {
+		name     string
+		list     map[string]any
+		args     []string
+		opts     []VerbOption
+		wantPath []string
+		want     []string
+	}{
+		{name: "transposition", list: top, args: []string{"rnu"}, want: []string{"run"}},
+		{name: "two matches, sorted", list: top, args: []string{"lst"}, want: []string{"last", "list"}},
+		{name: "no match", list: top, args: []string{"xyz"}},
+		{name: "empty and non-verb keys excluded", list: top, args: []string{"x"}},
+		{name: "case counts as an edit", list: top, args: []string{"RUN"}},
+		{name: "ignore case", list: top, args: []string{"RUN"}, opts: []VerbOption{WithIgnoreCase()}, want: []string{"run"}},
+		{name: "ignore case plus edit", list: top, args: []string{"RNU"}, opts: []VerbOption{WithIgnoreCase()}, want: []string{"run"}},
+		{
+			name: "max distance 2, nearest first",
+			list: top, args: []string{"lis"}, opts: []VerbOption{WithMaxDistance(2)},
+			want: []string{"list", "last"},
+		},
+		{name: "negative max distance disables", list: top, args: []string{"rnu"}, opts: []VerbOption{WithMaxDistance(-1)}},
+		{name: "nested", list: nested, args: []string{"remote", "ad"}, wantPath: []string{"remote"}, want: []string{"add"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := RunVerbs(context.Background(), tt.list, tt.args, tt.opts...)
+			var uv *UnknownVerbError
+			if !errors.As(err, &uv) || !errors.Is(err, ErrUnknownVerb) {
+				t.Fatalf("error = %v, want *UnknownVerbError", err)
+			}
+			if uv.Verb != tt.args[len(tt.args)-1] {
+				t.Fatalf("Verb = %q, want %q", uv.Verb, tt.args[len(tt.args)-1])
+			}
+			if !slices.Equal(uv.Path, tt.wantPath) {
+				t.Fatalf("Path = %q, want %q", uv.Path, tt.wantPath)
+			}
+			if !slices.Equal(uv.Suggestions, tt.want) {
+				t.Fatalf("Suggestions = %q, want %q", uv.Suggestions, tt.want)
 			}
 		})
 	}

@@ -45,13 +45,29 @@ err := flag.RunVerbs(ctx, map[string]any{
   `ErrNoDefaultRunner`.
 - A verb that is a key: a `Runner` runs, a nested map is used for the next
   verb. At the nested level, no verb runs the `""` entry of that level.
-- A verb that is not a key: `ErrUnknownVerb`, wrapped with the verb. Check
-  with `errors.Is`.
+- A verb that is not a key: an `*UnknownVerbError` that wraps
+  `ErrUnknownVerb`. Check with `errors.Is` or `errors.As`. `Path` holds the
+  verbs of the levels above, `Suggestions` the verb keys of the level within
+  the optimal string alignment distance (Levenshtein plus swap of two
+  adjacent characters), nearest first.
 - An entry of another type (also a `""` entry that is not a `Runner`):
   `ErrInvalidVerbList`.
 - The error of a `Runner` is returned unchanged.
 - A typed nil `Runner` or nil `func(context.Context) error` entry panics when
   it runs. An untyped nil entry gives `ErrInvalidVerbList`.
+
+Options change the suggestions:
+
+- `WithMaxDistance(n)`: max distance, default 1. A negative value disables
+  suggestions.
+- `WithIgnoreCase()`: compare without case. The lookup stays case-sensitive.
+
+```go
+var uv *flag.UnknownVerbError
+if errors.As(err, &uv) && len(uv.Suggestions) > 0 {
+    fmt.Printf("did you mean: %s\n", strings.Join(uv.Suggestions, ", "))
+}
+```
 
 A runnable example is in `examples/runner`.
 
